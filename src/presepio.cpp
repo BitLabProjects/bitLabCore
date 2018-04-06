@@ -1,10 +1,12 @@
 #include "presepio.h"
 
-const int TICKS_PER_SECOND = 50 * 100;
+//const int TICKS_PER_SECOND = 100;
+const int TICKS_PER_SECOND = 50*100;
 
 Presepio::Presepio():
   led_heartbeat(LED1),
-  pc(USBTX, USBRX) {
+  pc(USBTX, USBRX),
+  main_crossover(D7) {
 
 }
 
@@ -12,6 +14,7 @@ void Presepio::init() {
   tick_received = false;
   tick_count = 0;
   ticker.attach(callback(this, &Presepio::tick), 1.0 / TICKS_PER_SECOND);
+  main_crossover.rise(callback(this, &Presepio::main_crossover_rise));
 
   pc.baud(115200);
   pc.printf("===== Presepe =====\n");
@@ -20,8 +23,9 @@ void Presepio::init() {
 }
 
 void Presepio::loop() {
-  if (tick_received) {
-    tick_received = false;
+  //Use tick_received for internal clock
+  if (rise_received) {
+    rise_received = false;
 
     tick_count += 1;
     if (tick_count == TICKS_PER_SECOND) {
@@ -33,4 +37,8 @@ void Presepio::loop() {
 
 void Presepio::tick() {
   tick_received = true;
+}
+
+void Presepio::main_crossover_rise() {
+  rise_received = true;
 }
