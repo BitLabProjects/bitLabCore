@@ -5,8 +5,8 @@ Presepio presepio;
 int main() {
   presepio.init();
   while(1) {
-    presepio.loop();
-  }
+    presepio.dimming();
+  }  
 }
 
 // Serial pc(USBTX, USBRX);
