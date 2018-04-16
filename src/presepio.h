@@ -14,7 +14,15 @@ public:
 
 private:
   DigitalOut led_heartbeat;
-  DigitalOut led_dimming;
+
+  DigitalOut analog0;
+  DigitalOut analog1;
+  DigitalOut analog2;
+  DigitalOut analog3;
+  DigitalOut analog4;
+  DigitalOut analog5;
+  DigitalOut analog6;
+  DigitalOut analog7;  
   
   InterruptIn main_crossover;
   bool       rise_received;
@@ -25,6 +33,7 @@ private:
   bool       tick_received;
   int        tick_count;
   int        rise_count;
+  int        curr_time; //Tenths of second in current timeline
 
   void tick();
   void main_crossover_rise();
