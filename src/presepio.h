@@ -36,7 +36,7 @@ private:
   int        curr_time; //Tenths of second in current timeline
 
   void tick();
-  void main_crossover_rise();
+  void main_crossover_rise();  
 };
 
 #endif
