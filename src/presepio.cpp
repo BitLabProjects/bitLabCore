@@ -18,14 +18,14 @@ const int ANALOGOUT_COUNT = 8;
 const int TIMELINE_ENTRIES = 4;
 const int TIME_PERCENT_PAIRS = TIMELINE_ENTRIES * 2;
 
-int analog_timeline[TIME_PERCENT_PAIRS][ANALOGOUT_COUNT] = {{0, 10, 8,  20, 16, 30, 24, 0},
-                                                            {1, 10, 9,  20, 17, 30, 25, 0},
-                                                            {2, 10, 10, 20, 18, 30, 26, 0},
-                                                            {3, 10, 11, 20, 19, 30, 27, 0},
-                                                            {4, 10, 12, 20, 20, 30, 28, 0},
-                                                            {5, 10, 13, 20, 21, 30, 29, 0},
-                                                            {6, 10, 14, 20, 22, 30, 30, 0},
-                                                            {7, 10, 15, 20, 23, 30, 31, 0}};
+int analog_timeline[TIME_PERCENT_PAIRS][ANALOGOUT_COUNT] = {{0, 10, 8, 20, 16, 10, 24, 0},
+                                                            {1, 10, 9, 20, 17, 10, 25, 0},
+                                                            {2, 10, 10, 20, 18, 10, 26, 0},
+                                                            {3, 10, 11, 20, 19, 10, 27, 0},
+                                                            {4, 10, 12, 20, 20, 10, 28, 0},
+                                                            {5, 10, 13, 20, 21, 10, 29, 0},
+                                                            {6, 10, 14, 20, 22, 10, 30, 0},
+                                                            {7, 10, 15, 20, 23, 10, 31, 0}};
 
 Presepio::Presepio() : led_heartbeat(LED2),
                        analog0(D2),
@@ -85,18 +85,30 @@ void Presepio::dimming()
   static int tick_per_rise_count = 0;
   static int dim_percent[ANALOGOUT_COUNT] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+  if (rise_received)
+  {
+    tick_per_rise_count = 0;
+    rise_received = false;
+    rise_count += 1;
+    if (rise_count == RISE_PER_SECOND)
+    {
+      rise_count = 0;
+      led_heartbeat = !led_heartbeat;
+    }
+  }
+
   if (tick_received)
   {
     tick_count += 1;
     tick_received = false;
     tick_per_rise_count += 1;
 
-    if (tick_count > TICKS_PER_TENTHOFASECOND)
+    if (tick_count == TICKS_PER_TENTHOFASECOND)
     {
       tick_count = 0;
       curr_time += 1;
       //restart timeline
-      if (curr_time > TIMELINE_DURATION)
+      if (curr_time == TIMELINE_DURATION)
         curr_time = 0;
     }
 
@@ -105,7 +117,7 @@ void Presepio::dimming()
       tick_per_rise_count = 0;
       rise_received = false;
       rise_count += 1;
-      if (rise_count > RISE_PER_SECOND)
+      if (rise_count == RISE_PER_SECOND)
       {
         rise_count = 0;
         led_heartbeat = !led_heartbeat;
