@@ -1,7 +1,7 @@
 #include "presepio.h"
 
 // switch to simulate 50Hz signal
-const bool SIMULATE_VAC = true;
+const bool SIMULATE_VAC = false;
 
 // zero-crossings per second (signal ~ 50 Hz)
 const int RISE_PER_SECOND = 100;
@@ -11,21 +11,23 @@ const int TICKS_PER_TENTHOFASECOND = TICKS_PER_SECOND / 10;
 // ticks between two zero-crossings
 const int TICKS_PER_RISE = TICKS_PER_SECOND / RISE_PER_SECOND;
 
+const int GATE_TICKS = TICKS_PER_RISE * 1 / 100;
+
 // 1/10sec
-const int TIMELINE_DURATION = 32;
+const int TIMELINE_DURATION = 46;
 
 const int ANALOGOUT_COUNT = 8;
-const int TIMELINE_ENTRIES = 4;
+const int TIMELINE_ENTRIES = 10;
 const int TIME_PERCENT_PAIRS = TIMELINE_ENTRIES * 2;
 
-int analog_timeline[TIME_PERCENT_PAIRS][ANALOGOUT_COUNT] = {{0, 10, 8, 20, 16, 10, 24, 0},
-                                                            {1, 10, 9, 20, 17, 10, 25, 0},
-                                                            {2, 10, 10, 20, 18, 10, 26, 0},
-                                                            {3, 10, 11, 20, 19, 10, 27, 0},
-                                                            {4, 10, 12, 20, 20, 10, 28, 0},
-                                                            {5, 10, 13, 20, 21, 10, 29, 0},
-                                                            {6, 10, 14, 20, 22, 10, 30, 0},
-                                                            {7, 10, 15, 20, 23, 10, 31, 0}};
+int analog_timeline[ANALOGOUT_COUNT][TIME_PERCENT_PAIRS] = {{0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0},
+                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 45, 0}};
 
 Presepio::Presepio() : led_heartbeat(LED2),
                        analog0(D2),
@@ -145,12 +147,21 @@ void Presepio::dimming()
       int valueToSet;
       int low_ticks = TICKS_PER_RISE * ((100.0 - (dim_percent[out])) / 100.0);
 
-      // @_TODO manage min time for TRIAC gate activation
-      // if ((tick_per_rise_count < low_ticks) || (tick_per_rise_count > (low_ticks + GATE_TICKS) ))
-      if (tick_per_rise_count > low_ticks)
-        valueToSet = 1;
+      if (SIMULATE_VAC)
+      {
+        if (tick_per_rise_count > low_ticks)
+          valueToSet = 1;
+        else
+          valueToSet = 0;
+      }
       else
-        valueToSet = 0;
+      {
+        // pulse for TRIAC activation
+        if ((tick_per_rise_count < low_ticks) || (tick_per_rise_count > (low_ticks + GATE_TICKS)))
+          valueToSet = 0;
+        else
+          valueToSet = 1;
+      }
 
       analogOutMap[out] = valueToSet;
     }
