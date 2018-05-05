@@ -22,12 +22,16 @@ void RelayBoard::setOutput(int outputIdx, bool value) {
   int stateIdx = outputIdx / 8;
   int stateBit = outputIdx % 8;
   uint8_t bitMask = 1 << stateBit;
+
+  //Critical section
+  __disable_irq();
   if (value) {
     states[stateIdx] = states[stateIdx] | bitMask;
   } else {
     states[stateIdx] = states[stateIdx] & (~bitMask);
   }
   statesDirty[stateIdx] = true;
+  __enable_irq();
 }
 
 void RelayBoard::updateOutputs() {
