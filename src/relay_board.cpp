@@ -14,8 +14,8 @@ RelayBoard::RelayBoard(): outputs({(PC_0), (PC_1), (PB_0), (PA_4), (PA_1), (PA_0
   }
 }
 
-void RelayBoard::setOutput(int outputIdx, bool value) {
-  if (outputIdx < 0 || outputIdx > 8*N_STATES) {
+void RelayBoard::setOutput(int outputIdx, int value) {
+  if (outputIdx < 0 || outputIdx >= 8*N_STATES) {
     //Undefined output!
     return;
   }
@@ -25,7 +25,7 @@ void RelayBoard::setOutput(int outputIdx, bool value) {
 
   //Critical section
   __disable_irq();
-  if (value) {
+  if (value > 0) {
     states[stateIdx] = states[stateIdx] | bitMask;
   } else {
     states[stateIdx] = states[stateIdx] & (~bitMask);

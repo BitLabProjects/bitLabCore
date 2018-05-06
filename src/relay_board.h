@@ -8,7 +8,7 @@ class RelayBoard {
 public:
   RelayBoard();
 
-  void setOutput(int outputIdx, bool value);
+  void setOutput(int outputIdx, int value);
   void updateOutputs();
 
 private:

@@ -30,8 +30,10 @@ void Presepio::init()
   pc.printf("===================\n");
 
   timeline.create(TIMELINE_ENTRIES);
-  timeline.add(0, 0, 100, 1500);
-  timeline.add(1500, 0, 0, 1500);
+  timeline.add(0, 1, 100, 1500);
+  timeline.add(0, 9, 100,    0);
+  timeline.add(1500, 1, 0, 1500);
+  timeline.add(1500, 9, 0,    0);
   timeline.add(3000, TimelineEntry::OutputForTimelineEnd, 0, 0);
 }
 
@@ -54,12 +56,18 @@ void Presepio::playTimeline()
         timeline.moveFirst();
         tick_count = 0; //Reset time when timeline ended
       } else {
-        triac_board.setOutput(currEntry->output, currEntry->value);
+        uint8_t output = currEntry->output;
+        if (output >= 1 && output <= 8) {
+          triac_board.setOutput(output - 1, currEntry->value);
+        } else if (output >= 9 && output <= 40) {
+          relay_board.setOutput(output - 9, currEntry->value);
+        }
         timeline.moveNext();
       }
     }
 
     triac_board.updateOutputs();
+    relay_board.updateOutputs();
   }
 }
 
