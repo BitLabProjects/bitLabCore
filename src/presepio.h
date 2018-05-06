@@ -3,8 +3,11 @@
 
 #include "mbed.h"
 #include "PinNames.h"
+#include "triac_board.h"
+#include "relay_board.h"
 
-class Presepio {
+class Presepio
+{
 public:
   Presepio();
 
@@ -13,32 +16,17 @@ public:
   void dimming();
 
 private:
-  DigitalOut led_heartbeat;
+  Serial pc;
 
-  DigitalOut analog0;
-  DigitalOut analog1;
-  DigitalOut analog2;
-  DigitalOut analog3;
-  DigitalOut analog4;
-  DigitalOut analog5;
-  DigitalOut analog6;
-  DigitalOut analog7;
-  DigitalOut analogOutMap[8];
-  
-  InterruptIn main_crossover;
-  bool       rise_received;  
+  RelayBoard relay_board;
+  TriacBoard triac_board;
 
-  Serial     pc;
-
-  Ticker     ticker;
-  Ticker     zerocross_sim;
-  bool       tick_received;
-  int        tick_count;
-  int        rise_count;
-  int        curr_time; //Tenths of second in current timeline
+  Ticker ticker;
+  bool tick_received;
+  int tick_count;
+  int curr_time; //Tenths of second in current timeline
 
   void tick();
-  void main_crossover_rise();    
 };
 
 #endif

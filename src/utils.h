@@ -3,6 +3,7 @@
 
 class Utils {
 public:
+
   static inline bool bitIsSet(uint8_t value, uint8_t bit) {
     return (value & (1<<bit)) != 0;
   }
