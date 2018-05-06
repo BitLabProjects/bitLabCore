@@ -3,6 +3,8 @@
 
 #include "mbed.h"
 #include "PinNames.h"
+#include "config.h"
+#include "timeline.h"
 #include "triac_board.h"
 #include "relay_board.h"
 
@@ -12,18 +14,19 @@ public:
   Presepio();
 
   void init();
-  void loop();
+  void playTimeline();
   void dimming();
 
 private:
   Serial pc;
 
+  Timeline timeline;
   RelayBoard relay_board;
   TriacBoard triac_board;
 
   Ticker ticker;
-  bool tick_received;
-  int tick_count;
+  volatile bool tick_received;
+  volatile int tick_count;
   int curr_time; //Tenths of second in current timeline
 
   void tick();

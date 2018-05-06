@@ -3,7 +3,7 @@
 
 #include "mbed.h"
 #include "PinNames.h"
-#include "timeline.h"
+#include "config.h"
 
 class TriacBoard
 {

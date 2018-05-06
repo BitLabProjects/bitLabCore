@@ -1,28 +1,39 @@
 #ifndef _TIMELINE_H_
 #define _TIMELINE_H_
 
-// this file contains tickers, clocks and timeline settings
+#include "mbed.h"
 
-// internal clock ticks per second
-#define TICKS_PER_SECOND (50 * 100)
-#define TICKS_PER_TENTHOFASECOND (TICKS_PER_SECOND / 10)
+struct TimelineEntry
+{
+  int32_t time;
+  uint8_t output;
+  int32_t value;
+  int32_t duration;
 
-// switch to simulate 50Hz signal
-#define SIMULATE_VAC true
-// zero-crossings per second (signal ~ 50 Hz)
-#define RISE_PER_SECOND 100
+  static const uint8_t OutputForTimelineEnd = 255;
+  bool isTimelineEnd() const
+  {
+    return output == OutputForTimelineEnd;
+  }
+};
 
-// ticks between two zero-crossings
-#define TICKS_PER_RISE (TICKS_PER_SECOND / RISE_PER_SECOND)
-// ticks needed to activate TRIAC till the next crossover
-#define GATE_TICKS (TICKS_PER_RISE * 1 / 100)
+class Timeline
+{
+public:
+  Timeline();
 
-// 1/10sec
-#define TIMELINE_DURATION 40
-#define ANALOGOUT_COUNT 8
-#define TIMELINE_ENTRIES 10
-#define TIME_PERCENT_ITEMS (TIMELINE_ENTRIES * 2)
+  void create(int32_t newEntriesCapacity);
+  void add(int32_t time, uint8_t output, int32_t value, int32_t duration);
+  const TimelineEntry *getCurrent();
+  void moveFirst();
+  void moveNext();
+  bool isFinished();
 
-// TODO add methods to update timeline
+private:
+  TimelineEntry *entries;
+  int32_t entriesCount;
+  int32_t entriesCapacity;
+  int32_t currentIdx;
+};
 
 #endif
