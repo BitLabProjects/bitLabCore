@@ -4,14 +4,16 @@
 #include "mbed.h"
 #include "PinNames.h"
 #include "config.h"
+#include "utils.h"
 
 class TriacBoard
 {
 public:
   TriacBoard();
 
-  void setOutput(int outputIdx, int percent);
-  void updateOutputs();
+  void setOutput(int outputIdx, int value, millisec startTime, millisec duration);
+  void updateOutputs(millisec time);
+  void debugPrintOutputs(Serial& serial);
 
 private:
   // show connection to 50Hz external signal (230Vac)
@@ -20,8 +22,39 @@ private:
 
   InterruptIn main_crossover;
 
+  struct OutputState {
+    int value;
+    int from;
+    int to;
+    millisec startTime;
+    millisec duration;
+
+    inline void reset() {
+      value = 0;
+      from = 0;
+      to = 0; 
+      startTime = 0;
+      duration = 0;
+    }
+    inline void set(int newTo, millisec newStartTime, millisec newDuration) {
+      from = value;
+      to = newTo; 
+      startTime = newStartTime;
+      duration = newDuration;
+    }
+    inline void update(int time) {
+      if (duration <= 0) {
+        value = startTime > time ? from : to;
+      } else {
+        int delta = to - from;
+        float t = (((float)time) - startTime) / duration;
+        t = Utils::min(t, 1); //Don't go above 1, so the result is between 'from' and 'to' values
+        value = from + (int)(delta * t);
+      }
+    }
+  };
   // percent set for each output
-  int states[ANALOGOUT_COUNT];
+  OutputState states[ANALOGOUT_COUNT];
 
   Ticker zerocross_sim;
   int rise_count;

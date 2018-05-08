@@ -30,19 +30,22 @@ void Presepio::init()
   pc.printf("===================\n");
 
   timeline.create(TIMELINE_ENTRIES);
-  timeline.add(0, 1, 100, 1500);
-  timeline.add(0, 9, 100,    0);
-  timeline.add(1500, 1, 0, 1500);
-  timeline.add(1500, 9, 0,    0);
-  timeline.add(3000, TimelineEntry::OutputForTimelineEnd, 0, 0);
+  timeline.add(0, 1, 100, 2500);
+  timeline.add(0, 9, 100, 0);
+  timeline.add(5000, 1, 0, 2500);
+  timeline.add(5000, 9, 0, 0);
+  timeline.add(10000, TimelineEntry::OutputForTimelineEnd, 0, 0);
 }
 
 void Presepio::playTimeline()
 {
+  bool printEvents = true;
+  bool printDebug = false;
+
   if (tick_received)
   {
     tick_received = false;
-  
+
     //Calculate the current time in milliseconds
     int currTime = 1000 * tick_count / TICKS_PER_SECOND;
 
@@ -50,74 +53,52 @@ void Presepio::playTimeline()
     //TODO loop for multiple simultaneous (or near) entries
     if (currEntry->time <= currTime)
     {
-      //pc.printf("event! out[%i]=%i\r\n", currEntry->output, currEntry->value);
       //Apply
-      if (currEntry->isTimelineEnd()) {
+      if (currEntry->isTimelineEnd())
+      {
+        if (printEvents)
+        {
+          pc.printf("%5i ms: timeline finished\r\n", currEntry->time);
+        }
         timeline.moveFirst();
         tick_count = 0; //Reset time when timeline ended
-      } else {
+      }
+      else
+      {
         uint8_t output = currEntry->output;
-        if (output >= 1 && output <= 8) {
-          triac_board.setOutput(output - 1, currEntry->value);
-        } else if (output >= 9 && output <= 40) {
-          relay_board.setOutput(output - 9, currEntry->value);
+        if (output >= 1 && output <= 8)
+        {
+          int triacIdx = output - 1;
+          triac_board.setOutput(triacIdx, currEntry->value, currEntry->time, currEntry->duration);
+          if (printEvents)
+          {
+            pc.printf("%5i ms: dimmer #%i to %i%% in %i ms\r\n", currEntry->time, triacIdx + 1, currEntry->value, currEntry->duration);
+          }
+        }
+        else if (output >= 9 && output <= 40)
+        {
+          int relayIdx = output - 9;
+          relay_board.setOutput(relayIdx, currEntry->value);
+          if (printEvents)
+          {
+            pc.printf("%5i ms: relay  #%i to %s\r\n", currEntry->time, relayIdx + 1, currEntry->value == 0 ? "OFF" : "ON");
+          }
         }
         timeline.moveNext();
       }
     }
 
-    triac_board.updateOutputs();
+    triac_board.updateOutputs(currTime);
     relay_board.updateOutputs();
-  }
-}
 
-//Change leds light based on timeline
-void Presepio::dimming()
-{
-  // next timeline index entry to interpolate
-  static int dim_nextEntry_idx[ANALOGOUT_COUNT] = {1, 1, 1, 1, 1, 1, 1, 1};
-
-  if (tick_received)
-  {
-    tick_received = false;
-
-    if (tick_count == TICKS_PER_TENTHOFASECOND)
+    if (printDebug)
     {
-      tick_count = 0;
-      curr_time += 1;
-      //restart timeline
-      if (curr_time == TIMELINE_DURATION)
+      //Every 100 ms print outputs for debug
+      if (currTime % 100 == 0)
       {
-        curr_time = 0;
-        int out;
-        for (out = 0; out < ANALOGOUT_COUNT; out++)
-          dim_nextEntry_idx[out] = 1;
+        triac_board.debugPrintOutputs(pc);
       }
     }
-
-    //Update percent for each out
-    int out;
-    for (out = 0; out < ANALOGOUT_COUNT; out++)
-    {
-      // interpolation between entries
-      int nextEntry_idx = dim_nextEntry_idx[out];
-      int prevEntry_idx = dim_nextEntry_idx[out] - 1;
-
-      int prevT = analog_timeline[out][prevEntry_idx * 2];
-      int prevP = analog_timeline[out][prevEntry_idx * 2 + 1];
-
-      int nextT = analog_timeline[out][nextEntry_idx * 2];
-      int nextP = analog_timeline[out][nextEntry_idx * 2 + 1];
-
-      if (curr_time == nextT)
-        dim_nextEntry_idx[out] = dim_nextEntry_idx[out] + 1;
-      if (dim_nextEntry_idx[out] == TIMELINE_ENTRIES)
-        dim_nextEntry_idx[out] = 1;
-
-      triac_board.setOutput(out, ((nextP - prevP) * (curr_time - prevT) / (nextT - prevT)) + prevP);
-    }
-
-    triac_board.updateOutputs();
   }
 }
 

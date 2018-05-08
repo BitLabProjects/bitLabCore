@@ -1,6 +1,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+typedef int32_t millisec;
+
 // this file contains tickers, clocks and timeline settings
 
 // internal clock ticks per second

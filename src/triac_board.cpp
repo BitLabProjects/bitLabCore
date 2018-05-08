@@ -7,8 +7,9 @@ TriacBoard::TriacBoard() : led_heartbeat(LED2),
 {
   tick_per_rise_count = 0;
 
-  for (int i = 0; i < ANALOGOUT_COUNT; i++)
-    states[i] = 0;
+  for (int i = 0; i < ANALOGOUT_COUNT; i++) {
+    states[i].reset(); 
+  }
 
   if (SIMULATE_VAC)
     zerocross_sim.attach(callback(this, &TriacBoard::main_crossover_rise), 1.0 / RISE_PER_SECOND);
@@ -16,21 +17,23 @@ TriacBoard::TriacBoard() : led_heartbeat(LED2),
     main_crossover.rise(callback(this, &TriacBoard::main_crossover_rise));
 }
 
-void TriacBoard::setOutput(int idx, int percent)
+void TriacBoard::setOutput(int idx, int value, millisec startTime, millisec duration)
 {
   __disable_irq();
-  states[idx] = percent;
+  states[idx].set(value, startTime, duration);
   __enable_irq();
 }
 
-void TriacBoard::updateOutputs()
+void TriacBoard::updateOutputs(millisec time)
 {
   tick_per_rise_count += 1;
   // set/reset each out based on percent
   for (int out = 0; out < ANALOGOUT_COUNT; out++)
   {
+    states[out].update(time);
+
     int valueToSet;
-    int low_ticks = TICKS_PER_RISE * ((100.0 - (states[out])) / 100.0);
+    int low_ticks = TICKS_PER_RISE * ((100.0 - (states[out].value)) / 100.0);
 
     if (SIMULATE_VAC)
     {
@@ -50,6 +53,14 @@ void TriacBoard::updateOutputs()
 
     outputs[out] = valueToSet;
   }
+}
+
+void TriacBoard::debugPrintOutputs(Serial& serial) {
+  for (int out = 0; out < ANALOGOUT_COUNT; out++)
+  {
+    serial.printf("#%i=%3i,", out, states[out].value);
+  }
+  serial.printf("\r\n");
 }
 
 void TriacBoard::main_crossover_rise()

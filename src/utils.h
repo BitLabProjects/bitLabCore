@@ -12,6 +12,9 @@ public:
       "NOP\n\t"
     );
   }
+  static inline float min(float a, float b) {
+    return a < b ? a : b;
+  }
 };
 
 #endif

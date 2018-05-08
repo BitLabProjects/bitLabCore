@@ -15,7 +15,6 @@ public:
 
   void init();
   void playTimeline();
-  void dimming();
 
 private:
   Serial pc;
