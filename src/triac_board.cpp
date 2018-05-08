@@ -5,15 +5,16 @@ TriacBoard::TriacBoard() : led_heartbeat(LED2),
                            outputs({(D2), (D3), (D4), (D5), (D6), (D7), (D8), (D9)}),
                            main_crossover(D10)
 {
-  tick_per_rise_count = 0;
+  input50HzIsStable = 0;
+  ticksSinceZeroCross = 0;
+  lastZeroCrossDurationInTicks = 0;
+  zeroCrossesCount = 0;
 
   for (int i = 0; i < ANALOGOUT_COUNT; i++) {
     states[i].reset(); 
   }
 
-  if (SIMULATE_VAC)
-    zerocross_sim.attach(callback(this, &TriacBoard::main_crossover_rise), 1.0 / RISE_PER_SECOND);
-  else
+  if (!SIMULATE_VAC)
     main_crossover.rise(callback(this, &TriacBoard::main_crossover_rise));
 }
 
@@ -24,20 +25,37 @@ void TriacBoard::setOutput(int idx, int value, millisec startTime, millisec dura
   __enable_irq();
 }
 
-void TriacBoard::updateOutputs(millisec time)
+void TriacBoard::onTick(millisec time)
 {
-  tick_per_rise_count += 1;
+  ticksSinceZeroCross += 1;
+
+  //Somehow using a ticker for simulation gives wrong timings...
+  if (SIMULATE_VAC) {
+    if (ticksSinceZeroCross == NOMINAL_100HZ_TICKS_PER_RISE) {
+      main_crossover_rise();
+    }
+  }
+
+  if (!input50HzIsStable) {
+    //No stable input, all outputs to zero
+    for (int out = 0; out < ANALOGOUT_COUNT; out++)
+    {
+      outputs[out] = 0;
+    }
+    return;
+  }
+
   // set/reset each out based on percent
   for (int out = 0; out < ANALOGOUT_COUNT; out++)
   {
     states[out].update(time);
 
     int valueToSet;
-    int low_ticks = TICKS_PER_RISE * ((100.0 - (states[out].value)) / 100.0);
+    int low_ticks = lastZeroCrossDurationInTicks * ((100.0 - (states[out].value)) / 100.0);
 
     if (SIMULATE_VAC)
     {
-      if (tick_per_rise_count > low_ticks)
+      if (ticksSinceZeroCross > low_ticks)
         valueToSet = 1;
       else
         valueToSet = 0;
@@ -45,7 +63,7 @@ void TriacBoard::updateOutputs(millisec time)
     else
     {
       // pulse for TRIAC activation
-      if ((tick_per_rise_count < low_ticks) || (tick_per_rise_count > (low_ticks + GATE_TICKS)))
+      if ((ticksSinceZeroCross < low_ticks) || (ticksSinceZeroCross > (low_ticks + GATE_TICKS)))
         valueToSet = 0;
       else
         valueToSet = 1;
@@ -65,11 +83,19 @@ void TriacBoard::debugPrintOutputs(Serial& serial) {
 
 void TriacBoard::main_crossover_rise()
 {
-  tick_per_rise_count = 0;
-  rise_count += 1;
-  if (rise_count == RISE_PER_SECOND)
+  lastZeroCrossDurationInTicks = ticksSinceZeroCross;
+  ticksSinceZeroCross = 0;
+
+  //NOMINAL_100HZ_TICKS_PER_RISE is twice the nominal 50Hz duration in ticks 
+  //twice because we have 100 zero crossing for a 50Hz sinusoidal wave
+  //Force all outputs to zero if the last measured duration is more than 20% off than the nominal one
+  //This detects the condition where we don't have a stable 50Hz sinusoidal wave
+  input50HzIsStable = Utils::absDiff(lastZeroCrossDurationInTicks, NOMINAL_100HZ_TICKS_PER_RISE) < NOMINAL_100HZ_TICKS_MAX_DELTA;
+
+  zeroCrossesCount += 1;
+  if (zeroCrossesCount == RISE_PER_SECOND)
   {
-    rise_count = 0;
+    zeroCrossesCount = 0;
     led_heartbeat = !led_heartbeat;
   }
 }

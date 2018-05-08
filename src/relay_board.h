@@ -9,7 +9,7 @@ public:
   RelayBoard();
 
   void setOutput(int outputIdx, int value);
-  void updateOutputs();
+  void onTick();
 
 private:
   DigitalOut outputs[8];

@@ -34,7 +34,7 @@ void RelayBoard::setOutput(int outputIdx, int value) {
   __enable_irq();
 }
 
-void RelayBoard::updateOutputs() {
+void RelayBoard::onTick() {
   for(int i=0; i<N_STATES; i++) {
     //For each dirty state
     if (statesDirty[i]) {

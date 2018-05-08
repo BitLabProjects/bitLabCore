@@ -15,6 +15,15 @@ public:
   static inline float min(float a, float b) {
     return a < b ? a : b;
   }
+  static inline float max(float a, float b) {
+    return a > b ? a : b;
+  }
+  static inline float abs(int a) {
+    return a < 0 ? -a : a;
+  }
+  static inline float absDiff(int a, int b) {
+    return abs(a - b);
+  }
 };
 
 #endif

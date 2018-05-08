@@ -15,9 +15,10 @@ typedef int32_t millisec;
 #define RISE_PER_SECOND 100
 
 // ticks between two zero-crossings
-#define TICKS_PER_RISE (TICKS_PER_SECOND / RISE_PER_SECOND)
+#define NOMINAL_100HZ_TICKS_PER_RISE (TICKS_PER_SECOND / RISE_PER_SECOND)
+#define NOMINAL_100HZ_TICKS_MAX_DELTA ((int)(NOMINAL_100HZ_TICKS_PER_RISE * 0.2))
 // ticks needed to activate TRIAC till the next crossover
-#define GATE_TICKS (TICKS_PER_RISE * 1 / 100)
+#define GATE_TICKS (NOMINAL_100HZ_TICKS_PER_RISE * 1 / 100)
 
 // 1/10sec
 #define TIMELINE_DURATION 40

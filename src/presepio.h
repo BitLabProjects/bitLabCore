@@ -21,6 +21,7 @@ private:
 
   Timeline timeline;
   RelayBoard relay_board;
+  bool lastInput50HzIsStable;
   TriacBoard triac_board;
 
   Ticker ticker;

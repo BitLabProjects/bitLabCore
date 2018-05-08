@@ -88,8 +88,8 @@ void Presepio::playTimeline()
       }
     }
 
-    triac_board.updateOutputs(currTime);
-    relay_board.updateOutputs();
+    triac_board.onTick(currTime);
+    relay_board.onTick();
 
     if (printDebug)
     {
@@ -98,6 +98,13 @@ void Presepio::playTimeline()
       {
         triac_board.debugPrintOutputs(pc);
       }
+    }
+
+    if (lastInput50HzIsStable != triac_board.getInput50HzIsStable()) {
+      lastInput50HzIsStable = triac_board.getInput50HzIsStable();
+      pc.printf("sys: Input 50Hz %s, measured: %.1f Hz\r\n", 
+                lastInput50HzIsStable ? "detected" : "lost", 
+                triac_board.getMeasured50HzFrequency());
     }
   }
 }
