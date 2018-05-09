@@ -23,7 +23,7 @@ typedef int32_t millisec;
 // 1/10sec
 #define TIMELINE_DURATION 40
 #define ANALOGOUT_COUNT 8
-#define TIMELINE_ENTRIES 10
+#define TIMELINE_ENTRIES 100
 #define TIME_PERCENT_ITEMS (TIMELINE_ENTRIES * 2)
 
 #endif
