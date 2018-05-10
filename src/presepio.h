@@ -4,7 +4,7 @@
 #include "mbed.h"
 #include "PinNames.h"
 #include "config.h"
-#include "timeline.h"
+#include "storyboard.h"
 #include "triac_board.h"
 #include "relay_board.h"
 
@@ -19,7 +19,7 @@ public:
 private:
   Serial pc;
 
-  Timeline timeline;
+  Storyboard storyboard;
   RelayBoard relay_board;
   bool lastInput50HzIsStable;
   TriacBoard triac_board;

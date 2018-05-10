@@ -76,7 +76,7 @@ void TriacBoard::onTick(millisec time)
 void TriacBoard::debugPrintOutputs(Serial& serial) {
   for (int out = 0; out < ANALOGOUT_COUNT; out++)
   {
-    serial.printf("#%i=%3i,", out, states[out].value);
+    serial.printf("#%i=%3i, ", out, states[out].value);
   }
   serial.printf("\r\n");
 }
