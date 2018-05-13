@@ -4,7 +4,7 @@
 #define N_STATES 4
 
 RelayBoard::RelayBoard(): outputs({(PC_0), (PC_1), (PB_0), (PA_4), (PA_1), (PA_0), (PC_3), (PC_2)}),
-                          chipSelect({(PH_1),(PH_0),(PC_15),(PC_14)}) {
+                          chipSelect({(D11),(D12),(D14),(PC_14)}) {
   //Initialize as all dirty and with all outputs at 0
   //They will be all updated on the next call to updateOutputs
   for(int i=0; i<N_STATES; i++) {

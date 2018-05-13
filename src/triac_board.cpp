@@ -90,7 +90,7 @@ void TriacBoard::main_crossover_rise()
   //twice because we have 100 zero crossing for a 50Hz sinusoidal wave
   //Force all outputs to zero if the last measured duration is more than 20% off than the nominal one
   //This detects the condition where we don't have a stable 50Hz sinusoidal wave
-  input50HzIsStable = Utils::absDiff(lastZeroCrossDurationInTicks, NOMINAL_100HZ_TICKS_PER_RISE) < NOMINAL_100HZ_TICKS_MAX_DELTA;
+  input50HzIsStable = true || Utils::absDiff(lastZeroCrossDurationInTicks, NOMINAL_100HZ_TICKS_PER_RISE) < NOMINAL_100HZ_TICKS_MAX_DELTA;
 
   zeroCrossesCount += 1;
   if (zeroCrossesCount == RISE_PER_SECOND)
