@@ -4,9 +4,9 @@
 #include "mbed.h"
 #include "PinNames.h"
 #include "config.h"
-#include "storyboard.h"
-#include "triac_board.h"
-#include "relay_board.h"
+#include "storyboard\storyboard.h"
+#include "boards\triac_board.h"
+#include "boards\relay_board.h"
 
 class Presepio
 {
