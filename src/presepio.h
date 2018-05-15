@@ -7,6 +7,7 @@
 #include "storyboard\storyboard.h"
 #include "boards\triac_board.h"
 #include "boards\relay_board.h"
+#include "os\SDFileSystem.h"
 
 class Presepio
 {
@@ -17,6 +18,7 @@ public:
   void playTimeline();
 
 private:
+  SDFileSystem sd;
   Serial pc;
 
   Storyboard storyboard;

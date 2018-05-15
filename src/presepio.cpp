@@ -1,5 +1,11 @@
 #include "presepio.h"
+#include "os\os.h"
 
+#include "platform/mbed_stats.h"
+
+#include "storyboard\storyboard_loader.h"
+
+#define USE_JSON true
 #define USE_ORIGINAL_TIMELINE false
 
 // for t=0 and t=TIMELINE_DURATION percent values must be equal
@@ -12,7 +18,8 @@ int analog_timeline[ANALOGOUT_COUNT][TIME_PERCENT_ITEMS] = {{0, 0, 5, 10, 10, 0,
                                                             {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0},
                                                             {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0}};
 
-Presepio::Presepio() : pc(USBTX, USBRX),
+Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
+                       pc(USBTX, USBRX),
                        storyboard(),
                        relay_board(),
                        triac_board()
@@ -21,88 +28,102 @@ Presepio::Presepio() : pc(USBTX, USBRX),
 
 void Presepio::init()
 {
+  pc.baud(115200);
+
   curr_time = 0;
   tick_received = false;
   tick_count = 0;
   ticker.attach(callback(this, &Presepio::tick), 1.0 / TICKS_PER_SECOND);
 
-  pc.baud(115200);
   pc.printf("===== Presepe =====\n");
   pc.printf("   version: 0.1a   \n");
   pc.printf("===================\n");
+  pc.printf("Used heap: %i bytes\n", Os::getUsedHeap());
 
-  // ORIGINAL TIMELINE
+  pc.printf("Mounting SD........");
+  int sdErrCode = sd.disk_initialize();
+  if (sdErrCode == 0)
+    pc.printf("[OK]\n");
+  else
+    pc.printf("[ERR]\n");
 
-  if (USE_ORIGINAL_TIMELINE)
+
+  if (USE_JSON)
+  {
+    const char *jsonContent = "{\"timelinesCount\":2,\"timelines\":[{\"name\":\"timeline0\",\"outputId\":1,\"outputType\":0,\"entriesCount\":3,\"entries\":[{\"time\":0,\"value\":100,\"duration\":500},{\"time\":500,\"value\":20,\"duration\":250},{\"time\":750,\"value\":50,\"duration\":100}]},{\"name\":\"timeline1\",\"outputId\":2,\"outputType\":1,\"entriesCount\":3,\"entries\":[{\"time\":0,\"value\":1,\"duration\":125},{\"time\":125,\"value\":0,\"duration\":1000},{\"time\":1125,\"value\":1,\"duration\":250}]}]}";
+    StoryboardLoader loader(&storyboard, jsonContent);
+    loader.load();
+  }
+  else if (USE_ORIGINAL_TIMELINE)
   {
     storyboard.create(40, 4000);
-    
+
     //           time,#out,value,duration
     // analog output_1
-    storyboard.addTimeline(3);    
+    storyboard.addTimeline(3);
     storyboard.addEntry(0, 1, 0, 10000);
     storyboard.addEntry(10000, 1, 100, 44000);
     storyboard.addEntry(54000, 1, 0, 65000);
     // analog output_2
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(0, 2, 0, 11000);
     storyboard.addEntry(11000, 2, 80, 58000);
     storyboard.addEntry(69000, 2, 80, 110000);
     storyboard.addEntry(179000, 2, 0, 45000);
     // analog output_3
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(0, 3, 0, 40000);
     storyboard.addEntry(40000, 3, 60, 50000);
     storyboard.addEntry(90000, 3, 60, 80000);
     storyboard.addEntry(170000, 3, 0, 50000);
     // analog output_4
-    storyboard.addTimeline(3);    
+    storyboard.addTimeline(3);
     storyboard.addEntry(0, 4, 0, 160000);
     storyboard.addEntry(160000, 4, 60, 20000);
     storyboard.addEntry(180000, 4, 0, 50000);
     // analog output_5
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(0, 5, 0, 280000);
     storyboard.addEntry(280000, 5, 40, 20000);
     storyboard.addEntry(300000, 5, 40, 30000);
     storyboard.addEntry(330000, 5, 0, 20000);
     // analog output_6
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(0, 6, 0, 185000);
     storyboard.addEntry(185000, 6, 25, 50000);
     storyboard.addEntry(235000, 6, 25, 50000);
     storyboard.addEntry(285000, 6, 0, 15000);
     // analog output_7
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(0, 7, 0, 245000);
     storyboard.addEntry(245000, 7, 40, 15000);
     storyboard.addEntry(260000, 7, 40, 20000);
     storyboard.addEntry(280000, 7, 0, 12000);
     // analog output_8
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(0, 8, 0, 250000);
     storyboard.addEntry(250000, 8, 45, 50000);
     storyboard.addEntry(300000, 8, 45, 40000);
     storyboard.addEntry(340000, 8, 0, 25000);
 
     // digital output_1
-    storyboard.addTimeline(0);    
+    storyboard.addTimeline(0);
     // digital output_2
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(3000, 10, 100, 0);
     storyboard.addEntry(100000, 10, 0, 0);
     storyboard.addEntry(180000, 10, 100, 0);
     storyboard.addEntry(240000, 10, 0, 0);
     // digital output_3
-    storyboard.addTimeline(0);    
+    storyboard.addTimeline(0);
     // digital output_4
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(28000, 12, 100, 0);
     storyboard.addEntry(90000, 12, 0, 0);
     storyboard.addEntry(180000, 12, 100, 0);
     storyboard.addEntry(220000, 12, 0, 0);
     // digital output_5
-    storyboard.addTimeline(4);    
+    storyboard.addTimeline(4);
     storyboard.addEntry(25000, 13, 100, 0);
     storyboard.addEntry(65000, 13, 0, 0);
     storyboard.addEntry(175000, 13, 100, 0);
@@ -218,7 +239,7 @@ void Presepio::init()
     // digital output_32
     storyboard.addTimeline(2);
     storyboard.addEntry(287000, 40, 100, 0);
-    storyboard.addEntry(302000, 40, 0, 0);   
+    storyboard.addEntry(302000, 40, 0, 0);
   }
   else
   {
@@ -233,7 +254,7 @@ void Presepio::init()
     // storyboard.addEntry(3000, 1, 20, 500);
     // storyboard.addEntry(3500, 1, 0, 500);
     storyboard.addTimeline(11);
-    storyboard.addEntry(0,    1, 0, 1000);
+    storyboard.addEntry(0, 1, 0, 1000);
     storyboard.addEntry(1000, 1, 20, 0);
     storyboard.addEntry(1000, 1, 0, 1000);
     storyboard.addEntry(2000, 1, 40, 0);
@@ -252,10 +273,11 @@ void Presepio::init()
     storyboard.addTimeline(0);
     storyboard.addTimeline(0);
 
-    for(uint8_t i = 9;i<=40;i++){
+    for (uint8_t i = 9; i <= 40; i++)
+    {
       storyboard.addTimeline(2);
-      storyboard.addEntry(250*(i-9), i, 100, 0);
-      storyboard.addEntry(250*(i-8), i, 0, 0);
+      storyboard.addEntry(250 * (i - 9), i, 100, 0);
+      storyboard.addEntry(250 * (i - 8), i, 0, 0);
     }
   }
 }
