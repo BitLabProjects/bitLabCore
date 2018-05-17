@@ -7,6 +7,7 @@
 
 #define USE_JSON false
 #define USE_ORIGINAL_TIMELINE false
+#define UPDATE_ON_INTERRUPT true
 
 // for t=0 and t=TIMELINE_DURATION percent values must be equal
 int analog_timeline[ANALOGOUT_COUNT][TIME_PERCENT_ITEMS] = {{0, 0, 5, 10, 10, 0, 15, 20, 20, 0, 25, 30, 30, 0, 35, 40, 40, 0, -1, 0},
@@ -29,7 +30,7 @@ Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
   playBufferHead = 0;
   playBufferTail = 0;
   playBufferHeadTime = 0;
-  play = true;
+  play = false;
 }
 
 void Presepio::init()
@@ -289,6 +290,10 @@ void Presepio::init()
       t->add(250 * (i - 8), 0, 0);
     }
   }
+
+  // Fill initial buffer
+  fillPlayBuffer();
+  play = true;
 }
 
 void Presepio::fillPlayBuffer()
@@ -299,18 +304,18 @@ void Presepio::fillPlayBuffer()
     return;
   }
 
-  Os::debug("play buffer: filling...\n");
+  //Os::debug("play buffer: filling...\n");
   while (playBufferHead != playBufferLast) {
     // Find next and put it in head position, then increment head
     uint8_t output;
     const TimelineEntry* entry;
     if (!storyboard.getNextTimelineAndEntry(playBufferHeadTime, &output, &entry))
     {
-      Os::debug("play buffer: no entry found, stopping\n");
-      play = false;
+      //Nothing to add, all the timelines are ended but the storyboard isn't
+      //Os::debug("play buffer: no entry found\n");
       break;
     }
-    Os::debug("play buffer: adding #%i at %i ms to %i in %i ms\n", output, entry->time, entry->value, entry->duration);
+    //Os::debug("play buffer: adding #%i at %i ms to %i in %i ms\n", output, entry->time, entry->value, entry->duration);
     playBuffer[playBufferHead].output = output;
     playBuffer[playBufferHead].entry = *entry;
     playBufferHeadTime = entry->time;
@@ -318,7 +323,7 @@ void Presepio::fillPlayBuffer()
 
     playBufferHead = (playBufferHead + 1) % playBufferCount;
   }
-  Os::debug("play buffer: filled %i entries\n", fillCount);
+  //Os::debug("play buffer: filled %i entries\n", fillCount);
 }
 
 void Presepio::playTimeline()
@@ -328,7 +333,7 @@ void Presepio::playTimeline()
   }
 
   bool printEvents = false;
-  bool printDebug = false;
+  bool printDebug = true;
 
   if (tick_received)
   {
@@ -337,6 +342,14 @@ void Presepio::playTimeline()
     //Calculate the current time in milliseconds
     int currTime = 1000 * tick_count / TICKS_PER_SECOND;
 
+#if UPDATE_ON_INTERRUPT
+    if (storyboard.isFinished(currTime)) {
+      Os::debug("storyboard finished, resetting\n");
+      storyboard.reset();
+      tick_count = 0; //Reset time when storyboard ends
+      playBufferHeadTime = 0;
+    }
+#else
     if (storyboard.isFinished(currTime))
     {
       if (printEvents)
@@ -361,24 +374,8 @@ void Presepio::playTimeline()
         if (currEntry->time <= currTime)
         {
           //Apply
-          if (out >= 1 && out <= 8)
-          {
-            int triacIdx = out - 1;
-            triac_board.setOutput(triacIdx, currEntry->value, currEntry->time, currEntry->duration);
-            if (printEvents)
-            {
-              pc.printf("%5i ms: dimmer #%i to %i%% in %i ms\r\n", currEntry->time, triacIdx + 1, currEntry->value, currEntry->duration);
-            }
-          }
-          else if (out >= 9 && out <= 40)
-          {
-            int relayIdx = out - 9;
-            relay_board.setOutput(relayIdx, currEntry->value);
-            if (printEvents)
-            {
-              pc.printf("%5i ms: relay  #%i to %s\r\n", currEntry->time, relayIdx + 1, currEntry->value == 0 ? "OFF" : "ON");
-            }
-          }
+          applyTimelineEntry(out, currEntry);
+
           // advance timeline cursor to next entry
           timeline->moveNext();
         }
@@ -387,13 +384,16 @@ void Presepio::playTimeline()
 
     triac_board.onTick(currTime);
     relay_board.onTick();
+#endif
 
     if (printDebug)
     {
       //Every 100 ms print outputs for debug
-      if (currTime % 100 == 0)
+      if (currTime % 500 == 0)
       {
-        triac_board.debugPrintOutputs(pc);
+        int playBufferSize = (playBufferHead >= playBufferTail ? playBufferHead - playBufferTail : playBufferCount - (playBufferTail - playBufferHead));
+        Os::debug("Debug info: playBufferSize=%i\n", playBufferSize);
+        triac_board.debugPrintOutputs();
       }
     }
 
@@ -411,4 +411,42 @@ void Presepio::tick()
 {
   tick_received = true;
   tick_count += 1;
+
+#if UPDATE_ON_INTERRUPT
+  millisec currTime = 1000 * tick_count / TICKS_PER_SECOND;
+  //Try consuming the next entry in the play buffer, if present
+  if (play && playBufferTail != playBufferHead) {
+    PlayBufferEntry* pbEntry = &playBuffer[playBufferTail];
+    if (pbEntry->entry.time <= currTime) {
+      //Apply!
+      applyTimelineEntry(pbEntry->output, &pbEntry->entry);
+      playBufferTail = (playBufferTail + 1) % playBufferCount;
+    }
+  }
+
+  triac_board.onTick(currTime);
+  relay_board.onTick();
+#endif
+}
+
+void Presepio::applyTimelineEntry(uint8_t output, const TimelineEntry* entry)
+{
+  if (output >= 1 && output <= 8)
+  {
+    int triacIdx = output - 1;
+    triac_board.setOutput(triacIdx, entry->value, entry->time, entry->duration);
+    // if (printEvents)
+    // {
+    //   pc.printf("%5i ms: dimmer #%i to %i%% in %i ms\r\n", currEntry->time, triacIdx + 1, currEntry->value, currEntry->duration);
+    // }
+  }
+  else if (output >= 9 && output <= 40)
+  {
+    int relayIdx = output - 9;
+    relay_board.setOutput(relayIdx, entry->value);
+    // if (printEvents)
+    // {
+    //   pc.printf("%5i ms: relay  #%i to %s\r\n", currEntry->time, relayIdx + 1, currEntry->value == 0 ? "OFF" : "ON");
+    // }
+  }
 }

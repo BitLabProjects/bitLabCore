@@ -47,6 +47,7 @@ private:
   int curr_time; //Tenths of second in current timeline
 
   void tick();
+  void applyTimelineEntry(uint8_t output, const TimelineEntry* entry);
 };
 
 #endif

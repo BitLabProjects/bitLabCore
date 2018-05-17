@@ -1,6 +1,8 @@
 #include "triac_board.h"
 #include "utils.h"
 
+#include "../os/os.h"
+
 TriacBoard::TriacBoard() : led_heartbeat(LED2),
                            outputs({(D2), (D3), (D4), (D5), (D6), (D7), (D8), (D9)}),
                            main_crossover(D10)
@@ -73,12 +75,12 @@ void TriacBoard::onTick(millisec time)
   }
 }
 
-void TriacBoard::debugPrintOutputs(Serial& serial) {
+void TriacBoard::debugPrintOutputs() {
   for (int out = 0; out < ANALOGOUT_COUNT; out++)
   {
-    serial.printf("#%i=%3i, ", out, states[out].value);
+    Os::debug("#%i=%3i[%3i-%3i], ", out+1, states[out].value, states[out].from, states[out].to);
   }
-  serial.printf("\r\n");
+  Os::debug("\n");
 }
 
 void TriacBoard::main_crossover_rise()

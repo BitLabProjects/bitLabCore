@@ -18,7 +18,7 @@ public:
   {
     return ((float)TICKS_PER_SECOND) / (lastZeroCrossDurationInTicks * 2.0f);
   }
-  void debugPrintOutputs(Serial &serial);
+  void debugPrintOutputs();
 
 private:
   // show connection to 50Hz external signal (230Vac)
@@ -60,7 +60,7 @@ private:
       {
         int delta = to - from;
         float t = (((float)time) - startTime) / duration;
-        t = Utils::min(t, 1); //Don't go above 1, so the result is between 'from' and 'to' values
+        t = Utils::max(0, Utils::min(t, 1)); //Don't go above 1, so the result is between 'from' and 'to' values
         value = from + (int)(delta * t);
       }
     }

@@ -10,7 +10,7 @@ typedef int32_t millisec;
 #define TICKS_PER_TENTHOFASECOND (TICKS_PER_SECOND / 10)
 
 // switch to simulate 50Hz signal
-#define SIMULATE_VAC false
+#define SIMULATE_VAC true
 // zero-crossings per second (signal ~ 50 Hz)
 #define RISE_PER_SECOND 100
 
