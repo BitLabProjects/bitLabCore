@@ -1,6 +1,8 @@
 #include "storyboard.h"
 #include "utils.h"
 
+#include "..\os\os.h"
+
 Storyboard::Storyboard()
 {
   timelines = NULL;
@@ -19,32 +21,24 @@ void Storyboard::create(int32_t newTimelinesCapacity, millisec totalDuration)
   duration = totalDuration;
 }
 
-void Storyboard::addTimeline(int32_t newEntriesCapacity)
+Timeline *Storyboard::addTimeline(uint8_t output, int32_t newEntriesCapacity)
 {
-  if (timelinesCount >= timelinesCapacity)
+  if (timelinesCount < timelinesCapacity)
   {
-    return;
+    timelines[timelinesCount].create(output, newEntriesCapacity);
+    timelinesCount += 1;
   }
-  timelines[timelinesCount] = Timeline();
-  timelines[timelinesCount].create(newEntriesCapacity);
-  timelinesCount += 1;
-}
-
-void Storyboard::addEntry(int32_t time, uint8_t output, int32_t value, int32_t duration)
-{
-  if (output > timelinesCount)
+  else
   {
-    // not enough timelines!!
-    return;
+    Os::debug("Error");
   }
 
-  timelines[output - 1].add(time, output, value, duration);
+  return &timelines[timelinesCount - 1];
 }
 
-const TimelineEntry *Storyboard::getCurrent(uint8_t output)
+Timeline *Storyboard::getTimeline(uint8_t output)
 {
-  uint8_t normalizedOutput = Utils::min(output - 1, timelinesCapacity - 1);
-  return timelines[normalizedOutput].getCurrent();
+  return &timelines[getTimelineIdx(output)];
 }
 
 bool Storyboard::isFinished(millisec currTime)
@@ -60,12 +54,7 @@ void Storyboard::reset()
   }
 }
 
-void Storyboard::advanceTimeline(uint8_t output)
+int Storyboard::getTimelineIdx(uint8_t output)
 {
-  timelines[output - 1].moveNext();
-}
-
-bool Storyboard::isTimelineFinished(uint8_t output)
-{
-  return timelines[output - 1].isFinished();
+  return Utils::max(0, Utils::min(output - 1, timelinesCapacity - 1));
 }

@@ -14,7 +14,7 @@ private:
   Storyboard* storyboard;
   Json json;
   bool readTimelines(int timelinesArray_ti, int timelinesCount);
-  bool readEntries(int outputId, int entriesArray_ti, int entriesCount);
+  bool readEntries(Timeline* timeline, int entriesArray_ti, int entriesCount);
 };
 
 #endif

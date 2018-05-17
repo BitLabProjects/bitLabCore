@@ -51,10 +51,10 @@ bool StoryboardLoader::readTimelines(int timelinesArray_ti, int timelinesCount)
 
     int entriesArray_ti = json.findValueIndexByKeyName("entries", JSMN_ARRAY, timelineObject_ti);
     int entriesCount = (entriesArray_ti == -1) ? 0 : json.childCount(entriesArray_ti);
-    storyboard->addTimeline(entriesCount);
+    Timeline* timeline = storyboard->addTimeline(outputId, entriesCount);
     Os::debug("Timeline #%i on output #%i has %i entries\n", idxTimeline, outputId, entriesCount);
 
-    if (!readEntries(outputId, entriesArray_ti, entriesCount))
+    if (!readEntries(timeline, entriesArray_ti, entriesCount))
     {
       return false;
     }
@@ -62,7 +62,7 @@ bool StoryboardLoader::readTimelines(int timelinesArray_ti, int timelinesCount)
 
   return true;
 }
-bool StoryboardLoader::readEntries(int outputId, int entriesArray_ti, int entriesCount)
+bool StoryboardLoader::readEntries(Timeline* timeline, int entriesArray_ti, int entriesCount)
 {
   int entryObject_ti = -1;
   for (int idxEntry = 0; idxEntry < entriesCount; idxEntry++)
@@ -79,7 +79,7 @@ bool StoryboardLoader::readEntries(int outputId, int entriesArray_ti, int entrie
     int duration = json.getIntegerValue("duration", 0, entryObject_ti);
     Os::debug(" %5i ms) %i in %i ms\n", time, value, duration);
 
-    storyboard->addEntry(time, outputId, value, duration);
+    timeline->add(time, value, duration);
   }
 
   return true;

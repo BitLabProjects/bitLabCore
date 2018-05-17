@@ -58,191 +58,194 @@ void Presepio::init()
   {
     storyboard.create(40, 4000);
 
+    Timeline* t = NULL;
     //           time,#out,value,duration
     // analog output_1
-    storyboard.addTimeline(3);
-    storyboard.addEntry(0, 1, 0, 10000);
-    storyboard.addEntry(10000, 1, 100, 44000);
-    storyboard.addEntry(54000, 1, 0, 65000);
+    t = storyboard.addTimeline(1, 3);
+    t->add(0, 0, 10000);
+    t->add(10000, 100, 44000);
+    t->add(54000, 0, 65000);
     // analog output_2
-    storyboard.addTimeline(4);
-    storyboard.addEntry(0, 2, 0, 11000);
-    storyboard.addEntry(11000, 2, 80, 58000);
-    storyboard.addEntry(69000, 2, 80, 110000);
-    storyboard.addEntry(179000, 2, 0, 45000);
+    t = storyboard.addTimeline(2, 4);
+    t->add(0, 0, 11000);
+    t->add(11000, 80, 58000);
+    t->add(69000, 80, 110000);
+    t->add(179000, 0, 45000);
     // analog output_3
-    storyboard.addTimeline(4);
-    storyboard.addEntry(0, 3, 0, 40000);
-    storyboard.addEntry(40000, 3, 60, 50000);
-    storyboard.addEntry(90000, 3, 60, 80000);
-    storyboard.addEntry(170000, 3, 0, 50000);
+    t = storyboard.addTimeline(3, 4);
+    t->add(0, 0, 40000);
+    t->add(40000, 60, 50000);
+    t->add(90000, 60, 80000);
+    t->add(170000, 0, 50000);
     // analog output_4
-    storyboard.addTimeline(3);
-    storyboard.addEntry(0, 4, 0, 160000);
-    storyboard.addEntry(160000, 4, 60, 20000);
-    storyboard.addEntry(180000, 4, 0, 50000);
+    t = storyboard.addTimeline(4, 3);
+    t->add(0, 0, 160000);
+    t->add(160000, 60, 20000);
+    t->add(180000, 0, 50000);
     // analog output_5
-    storyboard.addTimeline(4);
-    storyboard.addEntry(0, 5, 0, 280000);
-    storyboard.addEntry(280000, 5, 40, 20000);
-    storyboard.addEntry(300000, 5, 40, 30000);
-    storyboard.addEntry(330000, 5, 0, 20000);
+    t = storyboard.addTimeline(5, 4);
+    t->add(0, 0, 280000);
+    t->add(280000, 40, 20000);
+    t->add(300000, 40, 30000);
+    t->add(330000, 0, 20000);
     // analog output_6
-    storyboard.addTimeline(4);
-    storyboard.addEntry(0, 6, 0, 185000);
-    storyboard.addEntry(185000, 6, 25, 50000);
-    storyboard.addEntry(235000, 6, 25, 50000);
-    storyboard.addEntry(285000, 6, 0, 15000);
+    t = storyboard.addTimeline(6, 4);
+    t->add(0, 0, 185000);
+    t->add(185000, 25, 50000);
+    t->add(235000, 25, 50000);
+    t->add(285000, 0, 15000);
     // analog output_7
-    storyboard.addTimeline(4);
-    storyboard.addEntry(0, 7, 0, 245000);
-    storyboard.addEntry(245000, 7, 40, 15000);
-    storyboard.addEntry(260000, 7, 40, 20000);
-    storyboard.addEntry(280000, 7, 0, 12000);
+    t = storyboard.addTimeline(7, 4);
+    t->add(0, 0, 245000);
+    t->add(245000, 40, 15000);
+    t->add(260000, 40, 20000);
+    t->add(280000, 0, 12000);
     // analog output_8
-    storyboard.addTimeline(4);
-    storyboard.addEntry(0, 8, 0, 250000);
-    storyboard.addEntry(250000, 8, 45, 50000);
-    storyboard.addEntry(300000, 8, 45, 40000);
-    storyboard.addEntry(340000, 8, 0, 25000);
+    t = storyboard.addTimeline(8, 4);
+    t->add(0, 0, 250000);
+    t->add(250000, 45, 50000);
+    t->add(300000, 45, 40000);
+    t->add(340000, 0, 25000);
 
     // digital output_1
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(9, 0);
     // digital output_2
-    storyboard.addTimeline(4);
-    storyboard.addEntry(3000, 10, 100, 0);
-    storyboard.addEntry(100000, 10, 0, 0);
-    storyboard.addEntry(180000, 10, 100, 0);
-    storyboard.addEntry(240000, 10, 0, 0);
+    t = storyboard.addTimeline(10, 4);
+    t->add(3000, 100, 0);
+    t->add(100000, 0, 0);
+    t->add(180000, 100, 0);
+    t->add(240000, 0, 0);
     // digital output_3
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(11, 0);
     // digital output_4
-    storyboard.addTimeline(4);
-    storyboard.addEntry(28000, 12, 100, 0);
-    storyboard.addEntry(90000, 12, 0, 0);
-    storyboard.addEntry(180000, 12, 100, 0);
-    storyboard.addEntry(220000, 12, 0, 0);
+    t = storyboard.addTimeline(12, 4);
+    t->add(28000, 100, 0);
+    t->add(90000, 0, 0);
+    t->add(180000, 100, 0);
+    t->add(220000, 0, 0);
     // digital output_5
-    storyboard.addTimeline(4);
-    storyboard.addEntry(25000, 13, 100, 0);
-    storyboard.addEntry(65000, 13, 0, 0);
-    storyboard.addEntry(175000, 13, 100, 0);
-    storyboard.addEntry(230000, 13, 0, 0);
+    t = storyboard.addTimeline(13, 4);
+    t->add(25000, 100, 0);
+    t->add(65000, 0, 0);
+    t->add(175000, 100, 0);
+    t->add(230000, 0, 0);
     // digital output_6
-    storyboard.addTimeline(2);
-    storyboard.addEntry(60000, 14, 100, 0);
-    storyboard.addEntry(225000, 14, 0, 0);
+    t = storyboard.addTimeline(14, 2);
+    t->add(60000, 100, 0);
+    t->add(225000, 0, 0);
     // digital output_7
-    storyboard.addTimeline(4);
-    storyboard.addEntry(25000, 15, 100, 0);
-    storyboard.addEntry(80000, 15, 0, 0);
-    storyboard.addEntry(180000, 15, 100, 0);
-    storyboard.addEntry(210000, 15, 0, 0);
+    t = storyboard.addTimeline(15, 4);
+    t->add(25000, 100, 0);
+    t->add(80000, 0, 0);
+    t->add(180000, 100, 0);
+    t->add(210000, 0, 0);
     // digital output_8
-    storyboard.addTimeline(2);
-    storyboard.addEntry(55000, 16, 100, 0);
-    storyboard.addEntry(220000, 16, 0, 0);
+    t = storyboard.addTimeline(16, 2);
+    t->add(55000, 100, 0);
+    t->add(220000, 0, 0);
     // digital output_9
-    storyboard.addTimeline(2);
-    storyboard.addEntry(65000, 17, 100, 0);
-    storyboard.addEntry(185000, 17, 0, 0);
+    t = storyboard.addTimeline(17, 2);
+    t->add(65000, 100, 0);
+    t->add(185000, 0, 0);
     // digital output_10
-    storyboard.addTimeline(4);
-    storyboard.addEntry(10000, 18, 100, 0);
-    storyboard.addEntry(95000, 18, 0, 0);
-    storyboard.addEntry(155000, 18, 100, 0);
-    storyboard.addEntry(255000, 18, 0, 0);
+    t = storyboard.addTimeline(18, 4);
+    t->add(10000, 100, 0);
+    t->add(95000, 0, 0);
+    t->add(155000, 100, 0);
+    t->add(255000, 0, 0);
     // digital output_11
-    storyboard.addTimeline(2);
-    storyboard.addEntry(200000, 19, 100, 0);
-    storyboard.addEntry(240000, 19, 0, 0);
+    t = storyboard.addTimeline(19, 2);
+    t->add(200000, 100, 0);
+    t->add(240000, 0, 0);
     // digital output_12
-    storyboard.addTimeline(4);
-    storyboard.addEntry(15000, 20, 100, 0);
-    storyboard.addEntry(60000, 20, 0, 0);
-    storyboard.addEntry(180000, 20, 100, 0);
-    storyboard.addEntry(290000, 20, 0, 0);
+    t = storyboard.addTimeline(20, 4);
+    t->add(15000, 100, 0);
+    t->add(60000, 0, 0);
+    t->add(180000, 100, 0);
+    t->add(290000, 0, 0);
     // digital output_13
-    storyboard.addTimeline(2);
-    storyboard.addEntry(65000, 21, 100, 0);
-    storyboard.addEntry(225000, 21, 0, 0);
+    t = storyboard.addTimeline(21, 2);
+    t->add(65000, 100, 0);
+    t->add(225000, 0, 0);
     // digital output_14
-    storyboard.addTimeline(2);
-    storyboard.addEntry(60000, 22, 100, 0);
-    storyboard.addEntry(315000, 22, 0, 0);
+    t = storyboard.addTimeline(22, 2);
+    t->add(60000, 100, 0);
+    t->add(315000, 0, 0);
     // digital output_15
-    storyboard.addTimeline(2);
-    storyboard.addEntry(30000, 23, 100, 0);
-    storyboard.addEntry(210000, 23, 0, 0);
+    t = storyboard.addTimeline(23, 2);
+    t->add(30000, 100, 0);
+    t->add(210000, 0, 0);
     // digital output_16
-    storyboard.addTimeline(2);
-    storyboard.addEntry(25000, 24, 100, 0);
-    storyboard.addEntry(210000, 24, 0, 0);
+    t = storyboard.addTimeline(24, 2);
+    t->add(25000, 100, 0);
+    t->add(210000, 0, 0);
     // digital output_17
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(25, 0);
     // digital output_18
-    storyboard.addTimeline(2);
-    storyboard.addEntry(205000, 26, 100, 0);
-    storyboard.addEntry(305000, 26, 0, 0);
+    t = storyboard.addTimeline(26, 2);
+    t->add(205000, 100, 0);
+    t->add(305000, 0, 0);
     // digital output_19
-    storyboard.addTimeline(2);
-    storyboard.addEntry(200000, 27, 100, 0);
-    storyboard.addEntry(340000, 27, 0, 0);
+    t = storyboard.addTimeline(27, 2);
+    t->add(200000, 100, 0);
+    t->add(340000, 0, 0);
     // digital output_20
-    storyboard.addTimeline(2);
-    storyboard.addEntry(190000, 28, 100, 0);
-    storyboard.addEntry(320000, 28, 0, 0);
+    t = storyboard.addTimeline(28, 2);
+    t->add(190000, 100, 0);
+    t->add(320000, 0, 0);
     // digital output_21
-    storyboard.addTimeline(2);
-    storyboard.addEntry(195000, 29, 100, 0);
-    storyboard.addEntry(295000, 29, 0, 0);
+    t = storyboard.addTimeline(29, 2);
+    t->add(195000, 100, 0);
+    t->add(295000, 0, 0);
     // digital output_22
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(30, 0);
     // digital output_23
-    storyboard.addTimeline(2);
-    storyboard.addEntry(50000, 31, 100, 0);
-    storyboard.addEntry(295000, 31, 0, 0);
+    t = storyboard.addTimeline(31, 2);
+    t->add(50000, 100, 0);
+    t->add(295000, 0, 0);
     // digital output_24
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(32, 0);
     // digital output_25
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(33, 0);
     // digital output_26
-    storyboard.addTimeline(4);
-    storyboard.addEntry(10000, 34, 100, 0);
-    storyboard.addEntry(60000, 34, 0, 0);
-    storyboard.addEntry(150000, 34, 100, 0);
-    storyboard.addEntry(200000, 34, 0, 0);
+    t = storyboard.addTimeline(34, 4);
+    t->add(10000, 100, 0);
+    t->add(60000, 0, 0);
+    t->add(150000, 100, 0);
+    t->add(200000, 0, 0);
     // digital output_27
-    storyboard.addTimeline(8);
-    storyboard.addEntry(18000, 35, 100, 0);
-    storyboard.addEntry(19000, 35, 0, 0);
-    storyboard.addEntry(20000, 35, 100, 0);
-    storyboard.addEntry(21000, 35, 0, 0);
-    storyboard.addEntry(158000, 35, 100, 0);
-    storyboard.addEntry(160000, 35, 0, 0);
-    storyboard.addEntry(161000, 35, 100, 0);
-    storyboard.addEntry(162000, 35, 0, 0);
+    t = storyboard.addTimeline(35, 8);
+    t->add(18000, 100, 0);
+    t->add(19000, 0, 0);
+    t->add(20000, 100, 0);
+    t->add(21000, 0, 0);
+    t->add(158000, 100, 0);
+    t->add(160000, 0, 0);
+    t->add(161000, 100, 0);
+    t->add(162000, 0, 0);
     // digital output_28
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(36, 0);
     // digital output_29
-    storyboard.addTimeline(2);
-    storyboard.addEntry(250000, 37, 100, 0);
-    storyboard.addEntry(265000, 37, 0, 0);
+    t = storyboard.addTimeline(37, 2);
+    t->add(250000, 100, 0);
+    t->add(265000, 0, 0);
     // digital output_30
-    storyboard.addTimeline(2);
-    storyboard.addEntry(10000, 38, 100, 0);
-    storyboard.addEntry(13000, 38, 0, 0);
+    t = storyboard.addTimeline(38, 2);
+    t->add(10000, 100, 0);
+    t->add(13000, 0, 0);
     // digital output_31
-    storyboard.addTimeline(2);
-    storyboard.addEntry(14000, 39, 100, 0);
-    storyboard.addEntry(18000, 39, 0, 0);
+    t = storyboard.addTimeline(39, 2);
+    t->add(14000, 100, 0);
+    t->add(18000, 0, 0);
     // digital output_32
-    storyboard.addTimeline(2);
-    storyboard.addEntry(287000, 40, 100, 0);
-    storyboard.addEntry(302000, 40, 0, 0);
+    t = storyboard.addTimeline(40, 2);
+    t->add(287000, 100, 0);
+    t->add(302000, 0, 0);
   }
   else
   {
+    Timeline* t = NULL;
+
     storyboard.create(40, 6000);
     // storyboard.addTimeline(8);
     // storyboard.addEntry(0, 1, 20, 500);
@@ -253,31 +256,31 @@ void Presepio::init()
     // storyboard.addEntry(2500, 1, 20, 500);
     // storyboard.addEntry(3000, 1, 20, 500);
     // storyboard.addEntry(3500, 1, 0, 500);
-    storyboard.addTimeline(11);
-    storyboard.addEntry(0, 1, 0, 1000);
-    storyboard.addEntry(1000, 1, 20, 0);
-    storyboard.addEntry(1000, 1, 0, 1000);
-    storyboard.addEntry(2000, 1, 40, 0);
-    storyboard.addEntry(2000, 1, 0, 1000);
-    storyboard.addEntry(3000, 1, 60, 0);
-    storyboard.addEntry(3000, 1, 0, 1000);
-    storyboard.addEntry(4000, 1, 80, 0);
-    storyboard.addEntry(4000, 1, 0, 1000);
-    storyboard.addEntry(5000, 1, 100, 0);
-    storyboard.addEntry(5000, 1, 0, 1000);
-    storyboard.addTimeline(0);
-    storyboard.addTimeline(0);
-    storyboard.addTimeline(0);
-    storyboard.addTimeline(0);
-    storyboard.addTimeline(0);
-    storyboard.addTimeline(0);
-    storyboard.addTimeline(0);
+    t = storyboard.addTimeline(1, 11);
+    t->add(0, 0, 1000);
+    t->add(1000, 20, 0);
+    t->add(1000, 0, 1000);
+    t->add(2000, 40, 0);
+    t->add(2000, 0, 1000);
+    t->add(3000, 60, 0);
+    t->add(3000, 0, 1000);
+    t->add(4000, 80, 0);
+    t->add(4000, 0, 1000);
+    t->add(5000, 100, 0);
+    t->add(5000, 0, 1000);
+    t = storyboard.addTimeline(2, 0);
+    t = storyboard.addTimeline(3, 0);
+    t = storyboard.addTimeline(4, 0);
+    t = storyboard.addTimeline(5, 0);
+    t = storyboard.addTimeline(6, 0);
+    t = storyboard.addTimeline(7, 0);
+    t = storyboard.addTimeline(8, 0);
 
     for (uint8_t i = 9; i <= 40; i++)
     {
-      storyboard.addTimeline(2);
-      storyboard.addEntry(250 * (i - 9), i, 100, 0);
-      storyboard.addEntry(250 * (i - 8), i, 0, 0);
+      t = storyboard.addTimeline(i, 2);
+      t->add(250 * (i - 9), 100, 0);
+      t->add(250 * (i - 8), 0, 0);
     }
   }
 }
@@ -307,13 +310,14 @@ void Presepio::playTimeline()
     {
       for (uint8_t out = 1; out <= storyboard.timelinesCount; out++)
       {
-        if (storyboard.isTimelineFinished(out))
+        Timeline* timeline = storyboard.getTimeline(out);
+        if (timeline->isFinished())
         {
           // this timeline has already been applied, go on
           continue;
         }
 
-        const TimelineEntry *currEntry = storyboard.getCurrent(out);
+        const TimelineEntry *currEntry = timeline->getCurrent();
         if (currEntry->time <= currTime)
         {
           //Apply
@@ -336,7 +340,7 @@ void Presepio::playTimeline()
             }
           }
           // advance timeline cursor to next entry
-          storyboard.advanceTimeline(out);
+          timeline->moveNext();
         }
       }
     }

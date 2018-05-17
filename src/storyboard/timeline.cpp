@@ -1,6 +1,7 @@
 #include "timeline.h"
 
-Timeline::Timeline()
+Timeline::Timeline():
+  output(1)
 {
   entries = NULL;
   entriesCount = 0;
@@ -8,19 +9,20 @@ Timeline::Timeline()
   currentIdx = 0;
 }
 
-void Timeline::create(int32_t newEntriesCapacity)
+void Timeline::create(uint8_t output, int32_t newEntriesCapacity)
 {
   if (entries)
   {
     delete[] entries;
   }
+  this->output = output;
   entries = new TimelineEntry[newEntriesCapacity];
   entriesCapacity = newEntriesCapacity;
   entriesCount = 0;
   currentIdx = 0;
 }
 
-void Timeline::add(int32_t time, uint8_t output, int32_t value, int32_t duration)
+void Timeline::add(int32_t time, int32_t value, int32_t duration)
 {
   if (entriesCount == entriesCapacity)
   {
@@ -39,7 +41,6 @@ void Timeline::add(int32_t time, uint8_t output, int32_t value, int32_t duration
   }
 
   entries[entriesCount].time = time;
-  entries[entriesCount].output = output;
   entries[entriesCount].value = value;
   entries[entriesCount].duration = duration;
   entriesCount += 1;
