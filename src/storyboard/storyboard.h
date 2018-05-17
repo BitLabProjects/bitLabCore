@@ -14,6 +14,7 @@ public:
   Timeline* getTimeline(uint8_t output);
   bool isFinished(millisec currTime);
   void reset();
+  bool getNextTimelineAndEntry(millisec time, uint8_t* output, const TimelineEntry** entry);
   
   int32_t entriesCount(uint8_t output);
 

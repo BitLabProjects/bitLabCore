@@ -5,7 +5,7 @@
 
 #include "storyboard\storyboard_loader.h"
 
-#define USE_JSON true
+#define USE_JSON false
 #define USE_ORIGINAL_TIMELINE false
 
 // for t=0 and t=TIMELINE_DURATION percent values must be equal
@@ -24,6 +24,12 @@ Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
                        relay_board(),
                        triac_board()
 {
+  playBufferCount = 10;
+  playBuffer = new PlayBufferEntry[playBufferCount];
+  playBufferHead = 0;
+  playBufferTail = 0;
+  playBufferHeadTime = 0;
+  play = true;
 }
 
 void Presepio::init()
@@ -285,8 +291,42 @@ void Presepio::init()
   }
 }
 
+void Presepio::fillPlayBuffer()
+{
+  int fillCount = 0;
+  int playBufferLast = (playBufferTail + (playBufferCount-1)) % playBufferCount;
+  if (playBufferHead == playBufferLast) {
+    return;
+  }
+
+  Os::debug("play buffer: filling...\n");
+  while (playBufferHead != playBufferLast) {
+    // Find next and put it in head position, then increment head
+    uint8_t output;
+    const TimelineEntry* entry;
+    if (!storyboard.getNextTimelineAndEntry(playBufferHeadTime, &output, &entry))
+    {
+      Os::debug("play buffer: no entry found, stopping\n");
+      play = false;
+      break;
+    }
+    Os::debug("play buffer: adding #%i at %i ms to %i in %i ms\n", output, entry->time, entry->value, entry->duration);
+    playBuffer[playBufferHead].output = output;
+    playBuffer[playBufferHead].entry = *entry;
+    playBufferHeadTime = entry->time;
+    fillCount += 1;
+
+    playBufferHead = (playBufferHead + 1) % playBufferCount;
+  }
+  Os::debug("play buffer: filled %i entries\n", fillCount);
+}
+
 void Presepio::playTimeline()
 {
+  if (play) {
+    fillPlayBuffer();
+  }
+
   bool printEvents = false;
   bool printDebug = false;
 

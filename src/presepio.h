@@ -9,6 +9,12 @@
 #include "boards\relay_board.h"
 #include "os\SDFileSystem.h"
 
+struct PlayBufferEntry
+{
+  int32_t output;
+  TimelineEntry entry;
+};
+
 class Presepio
 {
 public:
@@ -25,6 +31,15 @@ private:
   RelayBoard relay_board;
   bool lastInput50HzIsStable;
   TriacBoard triac_board;
+
+  //Circular buffer for storyboard playing
+  bool play;
+  int playBufferCount;
+  PlayBufferEntry* playBuffer;
+  volatile int playBufferHead;
+  volatile int playBufferTail;
+  millisec playBufferHeadTime;
+  void fillPlayBuffer();
 
   Ticker ticker;
   volatile bool tick_received;
