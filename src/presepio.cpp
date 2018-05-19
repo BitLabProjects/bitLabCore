@@ -278,11 +278,30 @@ void Presepio::init()
   storyboardPlayer.init();
 }
 
+const int BUFFER_SIZE = 48;
+char readBuffer[BUFFER_SIZE] = {0};
+
 void Presepio::mainLoop()
 {
   bool printDebug = true;
 
   storyboardPlayer.mainLoop();
+
+  if (pc.readable())
+  {
+    pc.gets(readBuffer, BUFFER_SIZE - 1);
+    //pc.printf("Received <%s> with %i chars\n", readBuffer, strlen(readBuffer));
+    if (strcmp(readBuffer, "play\n") == 0) {
+      storyboardPlayer.play();
+      pc.printf("Playing...\n");
+    } else if (strcmp(readBuffer, "pause\n") == 0) {
+      storyboardPlayer.pause();
+      pc.printf("Paused\n");
+    } else if (strcmp(readBuffer, "stop\n") == 0) {
+      storyboardPlayer.stop();
+      pc.printf("Stopped\n");
+    }
+  }
 
   if (tick_received)
   {
@@ -313,6 +332,9 @@ void Presepio::tick()
   tick_received = true;
   tick_count += 1;
 
+  millisec64 prevCurrTime = currTime;
   currTime = 1000 * tick_count / TICKS_PER_SECOND;
-  storyboardPlayer.tick(currTime);
+
+  //Send only the delta, so storyboardPlayer can keep its time with just a sum
+  storyboardPlayer.tick(currTime - prevCurrTime);
 }

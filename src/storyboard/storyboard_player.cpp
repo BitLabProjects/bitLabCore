@@ -11,24 +11,41 @@ StoryboardPlayer::StoryboardPlayer(Storyboard *storyboard,
 {
   playBufferCount = 10;
   playBuffer = new PlayBufferEntry[playBufferCount];
-  playBufferHead = 0;
-  playBufferTail = 0;
-  playBufferHeadTime = 0;
-  playBufferTailTime = 0;
-  play = false;
+  stop();
 }
 
 void StoryboardPlayer::init()
 {
-  // Fill initial buffer
+  // Do nothing
+}
+
+void StoryboardPlayer::play()
+{
   playBufferMaxTime = storyboard->getDuration();
+  // Fill initial buffer
   fillPlayBuffer();
-  play = true;
+  playStatus = Playing;
+}
+void StoryboardPlayer::pause()
+{
+  //Keep everything as-is, so that a successive play resumes from where we left on pause
+  playStatus = Paused;
+}
+void StoryboardPlayer::stop()
+{
+  //Reset all the buffers, a successive play starts from the beginning
+  playBufferHead = 0;
+  playBufferTail = 0;
+  playBufferHeadTime = 0;
+  playBufferTailTime = 0;
+  storyboardTime = 0;
+  storyboard->reset();
+  playStatus = Stopped;
 }
 
 void StoryboardPlayer::mainLoop()
 {
-  if (play)
+  if (playStatus == Playing)
   {
     fillPlayBuffer();
   }
@@ -56,7 +73,7 @@ void StoryboardPlayer::fillPlayBuffer()
       {
         //Maybe empty storyboard? stop play
         Os::debug("play buffer: no entry found for two cycles, stopping\n");
-        play = false;
+        stop();
         return;
       }
       lastCycleWasReset = true;
@@ -79,11 +96,11 @@ void StoryboardPlayer::fillPlayBuffer()
   //Os::debug("play buffer: filled %i entries\n", fillCount);
 }
 
-void StoryboardPlayer::tick(millisec64 currTime)
+void StoryboardPlayer::tick(millisec64 timeDelta)
 {
-  if (play)
+  if (playStatus == Playing)
   {
-    millisec64 newStoryboardTime = currTime % playBufferMaxTime;
+    millisec64 newStoryboardTime = (storyboardTime + timeDelta) % playBufferMaxTime;
     if (newStoryboardTime < playBufferTailTime)
     {
       //execute all remaining entries up to max time
