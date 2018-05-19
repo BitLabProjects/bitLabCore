@@ -13,6 +13,7 @@ public:
   Timeline* addTimeline(uint8_t output, int32_t newEntriesCapacity);
   Timeline* getTimeline(uint8_t output);
   bool isFinished(millisec currTime);
+  millisec getDuration() { return duration; }
   void reset();
   bool getNextTimelineAndEntry(millisec time, uint8_t* output, const TimelineEntry** entry);
   

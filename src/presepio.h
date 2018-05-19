@@ -39,14 +39,18 @@ private:
   volatile int playBufferHead;
   volatile int playBufferTail;
   millisec playBufferHeadTime;
+  millisec playBufferTailTime;
+  millisec playBufferMaxTime;
   void fillPlayBuffer();
 
   Ticker ticker;
   volatile bool tick_received;
-  volatile int tick_count;
-  int curr_time; //Tenths of second in current timeline
+  volatile millisec64 tick_count;
+  volatile millisec64 currTime; //Time in milliseconds
+  volatile millisec64 storyboardTime; 
 
   void tick();
+  void executePlayBuffer();
   void applyTimelineEntry(uint8_t output, const TimelineEntry* entry);
 };
 

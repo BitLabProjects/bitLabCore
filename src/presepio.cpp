@@ -8,6 +8,7 @@
 #define USE_JSON false
 #define USE_ORIGINAL_TIMELINE false
 #define UPDATE_ON_INTERRUPT true
+#define DEBUG_TIME_MULTIPLIER 3
 
 // for t=0 and t=TIMELINE_DURATION percent values must be equal
 int analog_timeline[ANALOGOUT_COUNT][TIME_PERCENT_ITEMS] = {{0, 0, 5, 10, 10, 0, 15, 20, 20, 0, 25, 30, 30, 0, 35, 40, 40, 0, -1, 0},
@@ -30,14 +31,16 @@ Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
   playBufferHead = 0;
   playBufferTail = 0;
   playBufferHeadTime = 0;
+  playBufferTailTime = 0;
   play = false;
+  dbg = 0;
 }
 
 void Presepio::init()
 {
   pc.baud(115200);
 
-  curr_time = 0;
+  currTime = 0;
   tick_received = false;
   tick_count = 0;
   ticker.attach(callback(this, &Presepio::tick), 1.0 / TICKS_PER_SECOND);
@@ -292,6 +295,7 @@ void Presepio::init()
   }
 
   // Fill initial buffer
+  playBufferMaxTime = storyboard.getDuration();
   fillPlayBuffer();
   play = true;
 }
@@ -304,6 +308,7 @@ void Presepio::fillPlayBuffer()
     return;
   }
 
+  bool lastCycleWasReset = false;
   //Os::debug("play buffer: filling...\n");
   while (playBufferHead != playBufferLast) {
     // Find next and put it in head position, then increment head
@@ -311,17 +316,29 @@ void Presepio::fillPlayBuffer()
     const TimelineEntry* entry;
     if (!storyboard.getNextTimelineAndEntry(playBufferHeadTime, &output, &entry))
     {
+      if (lastCycleWasReset)
+      {
+        //Maybe empty storyboard? stop play
+        Os::debug("play buffer: no entry found for two cycles, stopping\n");
+        play = false;
+        return;
+      }
+      lastCycleWasReset = true;
       //Nothing to add, all the timelines are ended but the storyboard isn't
       //Os::debug("play buffer: no entry found\n");
-      break;
+      storyboard.reset();
+      playBufferHeadTime = 0;
+      continue;
     }
     //Os::debug("play buffer: adding #%i at %i ms to %i in %i ms\n", output, entry->time, entry->value, entry->duration);
     playBuffer[playBufferHead].output = output;
     playBuffer[playBufferHead].entry = *entry;
     playBufferHeadTime = entry->time;
+
     fillCount += 1;
 
     playBufferHead = (playBufferHead + 1) % playBufferCount;
+    lastCycleWasReset = false;
   }
   //Os::debug("play buffer: filled %i entries\n", fillCount);
 }
@@ -339,16 +356,13 @@ void Presepio::playTimeline()
   {
     tick_received = false;
 
-    //Calculate the current time in milliseconds
-    int currTime = 1000 * tick_count / TICKS_PER_SECOND;
-
 #if UPDATE_ON_INTERRUPT
-    if (storyboard.isFinished(currTime)) {
+    /*if (storyboard.isFinished(currTime)) {
       Os::debug("storyboard finished, resetting\n");
       storyboard.reset();
-      tick_count = 0; //Reset time when storyboard ends
+      //tick_count = 0; //Reset time when storyboard ends
       playBufferHeadTime = 0;
-    }
+    }*/
 #else
     if (storyboard.isFinished(currTime))
     {
@@ -392,7 +406,7 @@ void Presepio::playTimeline()
       if (currTime % 500 == 0)
       {
         int playBufferSize = (playBufferHead >= playBufferTail ? playBufferHead - playBufferTail : playBufferCount - (playBufferTail - playBufferHead));
-        Os::debug("Debug info: playBufferSize=%i\n", playBufferSize);
+        Os::debug("Debug info: time=%lli ms, play=%d, dbg=%i, storyboardTime=%lli ms, playBufferMaxTime=%i ms, playBufferSize=%i\n", currTime, play, dbg, storyboardTime, playBufferMaxTime, playBufferSize);
         triac_board.debugPrintOutputs();
       }
     }
@@ -413,20 +427,46 @@ void Presepio::tick()
   tick_count += 1;
 
 #if UPDATE_ON_INTERRUPT
-  millisec currTime = 1000 * tick_count / TICKS_PER_SECOND;
-  //Try consuming the next entry in the play buffer, if present
-  if (play && playBufferTail != playBufferHead) {
-    PlayBufferEntry* pbEntry = &playBuffer[playBufferTail];
-    if (pbEntry->entry.time <= currTime) {
-      //Apply!
-      applyTimelineEntry(pbEntry->output, &pbEntry->entry);
-      playBufferTail = (playBufferTail + 1) % playBufferCount;
+  currTime = 1000 * tick_count / TICKS_PER_SECOND;
+
+  if (play) {
+    millisec64 newStoryboardTime = currTime % playBufferMaxTime;
+    if (newStoryboardTime < playBufferTailTime)
+    {
+      //execute all remaining entries up to max time
+      storyboardTime = playBufferMaxTime;
+      executePlayBuffer();
+      //Then reset
+      playBufferTailTime = 0;
     }
+
+    storyboardTime = newStoryboardTime;
+    executePlayBuffer();
   }
 
-  triac_board.onTick(currTime);
+  triac_board.onTick(storyboardTime);
   relay_board.onTick();
 #endif
+}
+
+void Presepio::executePlayBuffer() 
+{
+  //Try consuming the next entry in the play buffer, if present
+  if (playBufferTail != playBufferHead) {
+    PlayBufferEntry* pbEntry = &playBuffer[playBufferTail];
+    millisec entryTime = pbEntry->entry.time;
+    //Keep track of tail time, that is the time of the last applied entry, 
+    //to discard entries that belong to the beginning of the next storyboard cycle
+    if (entryTime >= playBufferTailTime && entryTime <= storyboardTime) {
+      //Apply!
+      applyTimelineEntry(pbEntry->output, &pbEntry->entry);
+      playBufferTailTime = entryTime;
+      playBufferTail = (playBufferTail + 1) % playBufferCount;
+    } else {
+      //This entry is too new or of another storyboard cycle, stop executing
+      return;
+    }
+  }
 }
 
 void Presepio::applyTimelineEntry(uint8_t output, const TimelineEntry* entry)
