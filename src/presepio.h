@@ -16,7 +16,7 @@ public:
   Presepio();
 
   void init();
-  void playTimeline();
+  void mainLoop();
 
 private:
   SDFileSystem sd;

@@ -8,16 +8,6 @@
 #define USE_JSON false
 #define USE_ORIGINAL_TIMELINE false
 
-// for t=0 and t=TIMELINE_DURATION percent values must be equal
-int analog_timeline[ANALOGOUT_COUNT][TIME_PERCENT_ITEMS] = {{0, 0, 5, 10, 10, 0, 15, 20, 20, 0, 25, 30, 30, 0, 35, 40, 40, 0, -1, 0},
-                                                            {0, 40, 5, 0, 10, 30, 15, 0, 20, 20, 25, 0, 30, 10, 35, 0, 40, 40, -1, 0},
-                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0},
-                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0},
-                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0},
-                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0},
-                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0},
-                                                            {0, 10, 5, 20, 10, 30, 15, 40, 20, 50, 25, 60, 30, 70, 35, 80, 40, 90, 50, 0}};
-
 Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
                        pc(USBTX, USBRX),
                        storyboard(),
@@ -288,12 +278,11 @@ void Presepio::init()
   storyboardPlayer.init();
 }
 
-void Presepio::playTimeline()
+void Presepio::mainLoop()
 {
-  storyboardPlayer.mainLoop();
-
-  bool printEvents = false;
   bool printDebug = true;
+
+  storyboardPlayer.mainLoop();
 
   if (tick_received)
   {
@@ -301,7 +290,6 @@ void Presepio::playTimeline()
 
     if (printDebug)
     {
-      //Every 100 ms print outputs for debug
       if (currTime % 500 == 0)
       {
         //int playBufferSize = (playBufferHead >= playBufferTail ? playBufferHead - playBufferTail : playBufferCount - (playBufferTail - playBufferHead));
