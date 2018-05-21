@@ -115,6 +115,8 @@
 #include "SDFileSystem.h"
 #include "mbed_debug.h"
 
+#include "os.h"
+
 #define SD_COMMAND_TIMEOUT 5000
 
 #define SD_DBG             0
@@ -156,7 +158,7 @@ int SDFileSystem::initialise_card() {
 
     // send CMD0, should return with all zeros except IDLE STATE set (bit 0)
     if (_cmd(0, 0) != R1_IDLE_STATE) {
-        debug("No disk, or could not put SD card in to SPI idle state\n");
+        Os::debug("No disk, or could not put SD card in to SPI idle state\n");
         return SDCARD_FAIL;
     }
 
@@ -167,7 +169,7 @@ int SDFileSystem::initialise_card() {
     } else if (r == (R1_IDLE_STATE | R1_ILLEGAL_COMMAND)) {
         return initialise_card_v1();
     } else {
-        debug("Not in idle state after sending CMD8 (not an SD card?)\n");
+        Os::debug("Not in idle state after sending CMD8 (not an SD card?)\n");
         return SDCARD_FAIL;
     }
 }
@@ -177,12 +179,12 @@ int SDFileSystem::initialise_card_v1() {
         _cmd(55, 0);
         if (_cmd(41, 0) == 0) {
             cdv = 512;
-            debug_if(SD_DBG, "\n\rInit: SEDCARD_V1\n\r");
+            Os::debug(SD_DBG, "\n\rInit: SEDCARD_V1\n\r");
             return SDCARD_V1;
         }
     }
 
-    debug("Timeout waiting for v1.x card\n");
+    Os::debug("Timeout waiting for v1.x card\n");
     return SDCARD_FAIL;
 }
 
@@ -193,28 +195,28 @@ int SDFileSystem::initialise_card_v2() {
         _cmd(55, 0);
         if (_cmd(41, 0x40000000) == 0) {
             _cmd58();
-            debug_if(SD_DBG, "\n\rInit: SDCARD_V2\n\r");
+            Os::debug(SD_DBG, "\n\rInit: SDCARD_V2\n\r");
             cdv = 1;
             return SDCARD_V2;
         }
     }
 
-    debug("Timeout waiting for v2.x card\n");
+    Os::debug("Timeout waiting for v2.x card\n");
     return SDCARD_FAIL;
 }
 
 int SDFileSystem::disk_initialize() {
     _is_initialized = initialise_card();
     if (_is_initialized == 0) {
-        debug("Fail to initialize card\n");
+        Os::debug("Fail to initialize card\n");
         return 1;
     }
-    debug_if(SD_DBG, "init card = %d\n", _is_initialized);
+    Os::debug(SD_DBG, "init card = %d\n", _is_initialized);
     _sectors = _sd_sectors();
 
     // Set block length to 512 (CMD16)
     if (_cmd(16, 512) != 0) {
-        debug("Set 512-byte block timed out\n");
+        Os::debug("Set 512-byte block timed out\n");
         return 1;
     }
 
@@ -451,13 +453,13 @@ uint32_t SDFileSystem::_sd_sectors() {
 
     // CMD9, Response R2 (R1 byte + 16-byte block read)
     if (_cmdx(9, 0) != 0) {
-        debug("Didn't get a response from the disk\n");
+        Os::debug("Didn't get a response from the disk\n");
         return 0;
     }
 
     uint8_t csd[16];
     if (_read(csd, 16) != 0) {
-        debug("Couldn't read csd response from disk\n");
+        Os::debug("Couldn't read csd response from disk\n");
         return 0;
     }
 
@@ -491,7 +493,7 @@ uint32_t SDFileSystem::_sd_sectors() {
             break;
 
         default:
-            debug("CSD struct unsupported\r\n");
+            Os::debug("CSD struct unsupported\r\n");
             return 0;
     };
     return blocks;
