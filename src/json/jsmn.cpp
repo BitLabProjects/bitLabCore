@@ -180,21 +180,33 @@ static int jsmn_parse_string(jsmn_parser *parser, const char *js, size_t len, js
   return JSMN_ERROR_PART;
 }
 
-void fillAccept(jsmnaccept_t *acceptArg, jsmnaccepttype_t type, const char *js, int tokenIdx, jsmntok_t *token)
+void fillAccept(jsmnaccept_t *acceptArg, jsmnaccepttype_t type, const char *js, int tokenIdx, jsmntok_t *tokenKey, jsmntok_t *tokenValue = NULL, bool valueIsString = false)
 {
   acceptArg->type = type;
   acceptArg->tokenIdx = tokenIdx;
-  //Os::debug("token->start: %i, token->end: %i\n", token->start, token->end);
-  if (token->end <= 0)
+  //Os::debug("tokenKey->start: %i, tokenKey->end: %i\n", tokenKey->start, tokenKey->end);
+  if (tokenKey->end <= 0)
   {
     // It's an object or array not yet completed, pass a null name
-    acceptArg->keyOrVal = NULL;
-    acceptArg->keyOrValLength = 0;
+    acceptArg->key = NULL;
+    acceptArg->keyLength = 0;
   }
   else
   {
-    acceptArg->keyOrVal = &js[token->start];
-    acceptArg->keyOrValLength = token->end - token->start;
+    acceptArg->key = &js[tokenKey->start];
+    acceptArg->keyLength = tokenKey->end - tokenKey->start;
+  }
+
+  acceptArg->valueIsString = valueIsString;
+  if (tokenValue == NULL || tokenValue->end <= 0)
+  {
+    acceptArg->value = NULL;
+    acceptArg->valueLength = 0;
+  }
+  else
+  {
+    acceptArg->value = &js[tokenValue->start];
+    acceptArg->valueLength = tokenValue->end - tokenValue->start;
   }
 }
 
@@ -327,14 +339,15 @@ int jsmn_parse(jsmn_parser *parser,
       count++;
       if (parser->toksuper != -1 && tokens != NULL)
       {
-        jsmntok_t *t = &tokens[parser->toksuper];
-        t->childCount++;
+        jsmntok_t *parentToken = &tokens[parser->toksuper];
+        parentToken->childCount++;
 
-        if (t->type == JSMN_KEY)
+        if (parentToken->type == JSMN_KEY)
         {
+          jsmntok_t *valueToken = &tokens[parser->toknext - 1];
           // We just parsed a string value for a key, signal it
           // Ignore the accept result, as it's a leaf and we already have parsed it, so there's nothing to skip
-          fillAccept(&acceptArg, JSMN_Accept_KeyValue, js, parser->toksuper, t);
+          fillAccept(&acceptArg, JSMN_Accept_KeyValue, js, parser->toksuper, parentToken, valueToken, true);
           accept.call(&acceptArg);
         }
       }
@@ -394,9 +407,10 @@ int jsmn_parse(jsmn_parser *parser,
 
         if (t->type == JSMN_KEY)
         {
+          jsmntok_t *valueToken = &tokens[parser->toknext - 1];
           // We just parsed a primitive value for a key, signal it
           // Ignore the accept result, as it's a leaf and we already have parsed it, so there's nothing to skip
-          fillAccept(&acceptArg, JSMN_Accept_KeyValue, js, parser->toksuper, t);
+          fillAccept(&acceptArg, JSMN_Accept_KeyValue, js, parser->toksuper, t, valueToken, false);
           accept.call(&acceptArg);
         }
       }

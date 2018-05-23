@@ -1,7 +1,6 @@
 #include "timeline.h"
 
-Timeline::Timeline():
-  output(1)
+Timeline::Timeline() : output(1)
 {
   entries = NULL;
   entriesCount = 0;
@@ -15,11 +14,21 @@ void Timeline::create(uint8_t output, int32_t newEntriesCapacity)
   {
     delete[] entries;
   }
-  this->output = output;
   entries = new TimelineEntry[newEntriesCapacity];
   entriesCapacity = newEntriesCapacity;
+  setOutput(output);
+  clear();
+}
+
+void Timeline::clear()
+{
   entriesCount = 0;
-  currentIdx = 0;
+  moveFirst();
+}
+
+void Timeline::setOutput(uint8_t output)
+{
+  this->output = output;
 }
 
 void Timeline::add(int32_t time, int32_t value, int32_t duration)

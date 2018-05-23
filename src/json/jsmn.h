@@ -82,8 +82,11 @@ extern "C"
     {
       jsmnaccepttype_t type;
       int tokenIdx;
-      const char* keyOrVal;
-      int keyOrValLength;
+      const char* key;
+      int keyLength;
+      bool valueIsString;
+      const char* value;
+      int valueLength;
     } jsmnaccept_t;
 
     /**
