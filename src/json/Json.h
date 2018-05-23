@@ -177,6 +177,9 @@ class Json
         virtual ~Json ();
 
 
+        void parse(mbed::Callback<bool(const jsmnaccept_t*)> accept);
+
+
         /** findKeyIndex will find and return the token index representing the
          'Key' in underlying JSON object.  It is a strictly a linear key search
          and will return the first occurrence, without the JSON node structure

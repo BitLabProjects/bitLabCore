@@ -3,12 +3,16 @@
 #include "..\json\Json.h"
 #include "..\os\os.h"
 
-StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonContent) : storyboard(storyboard), json(jsonContent, strlen(jsonContent), 100)
+StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonContent) : storyboard(storyboard), json(jsonContent, strlen(jsonContent), 1000)
 {
 }
 
 bool StoryboardLoader::load()
 {
+  Os::debug("Parsing...\n");
+  json.parse(callback(this, &StoryboardLoader::accept));
+  Os::debug("Parsed\n");
+
   if (!json.isValidJson())
   {
     Os::debug("Invalid JSON\n");
@@ -82,5 +86,40 @@ bool StoryboardLoader::readEntries(Timeline* timeline, int entriesArray_ti, int 
     timeline->add(time, value, duration);
   }
 
+  return true;
+}
+
+bool StoryboardLoader::accept(const jsmnaccept_t* acceptArg)
+{
+  const int maxKeyLength = 32;
+  char key[maxKeyLength];
+
+  if (acceptArg->keyOrValLength <= 0)
+  {
+    // Must be an end of object or array, inside of another array not yet completed
+    strcpy(key, "-");
+  }
+  else
+  {
+    if (acceptArg->keyOrValLength >= maxKeyLength - 1)
+    {
+      return false;
+    }
+    strncpy(key, acceptArg->keyOrVal, acceptArg->keyOrValLength );
+    key[acceptArg->keyOrValLength] = 0; // NULL-terminate the string
+  }
+  
+  const char* acceptTypeDescr;
+  switch (acceptArg->type)
+  {
+    case JSMN_Accept_KeyValue: acceptTypeDescr = "KeyValue"; break;
+    case JSMN_Accept_ObjectBegin: acceptTypeDescr = "ObjectBegin"; break;
+    case JSMN_Accept_ObjectEnd: acceptTypeDescr = "ObjectEnd"; break;
+    case JSMN_Accept_ArrayBegin: acceptTypeDescr = "ArrayBegin"; break;
+    case JSMN_Accept_ArrayEnd: acceptTypeDescr = "ArrayEnd"; break;
+    default: acceptTypeDescr = "<unknown>"; break;
+  }
+  Os::debug("%s of \"%s\"\n", acceptTypeDescr, key);
+  
   return true;
 }

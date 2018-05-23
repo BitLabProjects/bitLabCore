@@ -27,11 +27,7 @@
 Json::Json(const char *jsonString, size_t length, unsigned int maxTokens)
     : maxTokenCount(maxTokens), source(jsonString), sourceLength(length)
 {
-  jsmn_parser parser;
   tokens = new jsmntok_t[maxTokenCount];
-
-  jsmn_init(&parser);
-  tokenCount = jsmn_parse(&parser, jsonString, length, tokens, maxTokenCount);
 }
 
 Json::Json(const Json &)
@@ -44,6 +40,13 @@ Json::Json(const Json &)
 Json::~Json()
 {
   delete[] tokens;
+}
+
+void Json::parse(mbed::Callback<bool(const jsmnaccept_t*)> accept)
+{
+  jsmn_parser parser;
+  jsmn_init(&parser);
+  tokenCount = jsmn_parse(&parser, source, sourceLength, tokens, maxTokenCount, accept);
 }
 
 int Json::findKeyIndex(const char *key, const int &startingAt) const

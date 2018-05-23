@@ -16,6 +16,8 @@
 
 #include <stddef.h>
 
+#include "platform/Callback.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -66,6 +68,24 @@ extern "C"
             int childCount;
     } jsmntok_t;
 
+
+    typedef enum
+    {
+        JSMN_Accept_KeyValue = 0,
+        JSMN_Accept_ObjectBegin = 1,
+        JSMN_Accept_ObjectEnd = 2,
+        JSMN_Accept_ArrayBegin = 3,
+        JSMN_Accept_ArrayEnd = 4
+    } jsmnaccepttype_t;
+
+    typedef struct
+    {
+      jsmnaccepttype_t type;
+      int tokenIdx;
+      const char* keyOrVal;
+      int keyOrValLength;
+    } jsmnaccept_t;
+
     /**
      * JSON parser. Contains an array of token blocks available. Also stores
      * the string being parsed now and current position in that string
@@ -86,7 +106,12 @@ extern "C"
      * Run JSON parser. It parses a JSON data string into and array of tokens, each describing
      * a single JSON object.
      */
-    int jsmn_parse ( jsmn_parser *parser, const char *js, size_t len, jsmntok_t *tokens, unsigned int num_tokens );
+    int jsmn_parse ( jsmn_parser *parser, 
+                     const char *js, 
+                     size_t len, 
+                     jsmntok_t *tokens, 
+                     unsigned int num_tokens,
+                     mbed::Callback<bool(const jsmnaccept_t*)> accept);
 
 #ifdef __cplusplus
 }

@@ -5,7 +5,7 @@
 
 #include "storyboard\storyboard_loader.h"
 
-#define USE_JSON false
+#define USE_JSON true
 #define USE_ORIGINAL_TIMELINE false
 
 Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
@@ -41,7 +41,8 @@ void Presepio::init()
 
   if (USE_JSON)
   {
-    const char *jsonContent = "{\"timelinesCount\":2,\"timelines\":[{\"name\":\"timeline0\",\"outputId\":1,\"outputType\":0,\"entriesCount\":3,\"entries\":[{\"time\":0,\"value\":100,\"duration\":500},{\"time\":500,\"value\":20,\"duration\":250},{\"time\":750,\"value\":50,\"duration\":100}]},{\"name\":\"timeline1\",\"outputId\":2,\"outputType\":1,\"entriesCount\":3,\"entries\":[{\"time\":0,\"value\":1,\"duration\":125},{\"time\":125,\"value\":0,\"duration\":1000},{\"time\":1125,\"value\":1,\"duration\":250}]}]}";
+    //const char *jsonContent = "{\"timelinesCount\":2,\"timelines\":[{\"name\":\"timeline0\",\"outputId\":1,\"outputType\":0,\"entriesCount\":3,\"entries\":[{\"time\":0,\"value\":100,\"duration\":500},{\"time\":500,\"value\":20,\"duration\":250},{\"time\":750,\"value\":50,\"duration\":100}]},{\"name\":\"timeline1\",\"outputId\":2,\"outputType\":1,\"entriesCount\":3,\"entries\":[{\"time\":0,\"value\":1,\"duration\":125},{\"time\":125,\"value\":0,\"duration\":1000},{\"time\":1125,\"value\":1,\"duration\":250}]}]}";
+    const char *jsonContent = "{  \"timelines\": [    {      \"name\": \"timeline1\",      \"outputId\": 1,      \"outputType\": 0,      \"entries\": [        {          \"time\": 0,          \"value\": 100,          \"duration\": 500        },        {          \"time\": 500,          \"value\": 20,          \"duration\": 250        },        {          \"time\": 750,          \"value\": 50,          \"duration\": 100        }      ]    },    {      \"name\": \"timeline2\",      \"outputId\": 2,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    },    {      \"name\": \"timeline3\",      \"outputId\": 3,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    },    {      \"name\": \"timeline4\",      \"outputId\": 4,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    },    {      \"name\": \"timeline5\",      \"outputId\": 5,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    },    {      \"name\": \"timeline6\",      \"outputId\": 6,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    },    {      \"name\": \"timeline7\",      \"outputId\": 7,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    },    {      \"name\": \"timeline8\",      \"outputId\": 8,      \"outputType\": 1,      \"entries\": [        {          \"time\": 0,          \"value\": 1,          \"duration\": 125        },        {          \"time\": 125,          \"value\": 0,          \"duration\": 1000        },        {          \"time\": 1125,          \"value\": 1,          \"duration\": 250        }      ]    }  ]}";
     StoryboardLoader loader(&storyboard, jsonContent);
     loader.load();
   }
@@ -283,7 +284,7 @@ char readBuffer[BUFFER_SIZE] = {0};
 
 void Presepio::mainLoop()
 {
-  bool printDebug = true;
+  bool printDebug = false;
 
   storyboardPlayer.mainLoop();
 
