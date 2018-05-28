@@ -33,9 +33,9 @@ private:
 
   bool readTimelines(int timelinesArray_ti, int timelinesCount);
   bool readEntries(Timeline* timeline, int entriesArray_ti, int entriesCount);
-  bool accept(const jsmnaccept_t* acceptArg);
+  bool accept(const JsonAccept_t* acceptArg);
 
-  bool tryMatchInteger(const jsmnaccept_t *acceptArg,
+  bool tryMatchInteger(const JsonAccept_t *acceptArg,
                        const char *expectedKey,
                        int &result);
 };

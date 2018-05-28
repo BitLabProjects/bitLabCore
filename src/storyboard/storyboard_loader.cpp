@@ -3,7 +3,8 @@
 #include "..\json\Json.h"
 #include "..\os\os.h"
 
-StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonContent) : storyboard(storyboard), json(jsonContent, strlen(jsonContent), 1000)
+StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonContent) : 
+  storyboard(storyboard), json(jsonContent, strlen(jsonContent), callback(this, &StoryboardLoader::accept))
 {
 }
 
@@ -14,83 +15,8 @@ bool StoryboardLoader::load()
   state = SLS_Begin;
   tempTimeline.create(1, 100);
   Os::debug("Parsing...\n");
-  json.parse(callback(this, &StoryboardLoader::accept));
+  json.parse();
   Os::debug("Parsed\n");
-  return true;
-
-  if (!json.isValidJson())
-  {
-    Os::debug("Invalid JSON\n");
-    return false;
-  }
-  if (json.type(0) != JSMN_OBJECT)
-  {
-    Os::debug("Invalid JSON. ROOT element is not Object\n");
-    return false;
-  }
-
-  int timelinesArray_ti = json.findValueIndexByKeyName("timelines", JSMN_ARRAY);
-
-  int timelinesCount = (timelinesArray_ti == -1) ? 0 : json.childCount(timelinesArray_ti);
-  int totalDuration = json.getIntegerValue("totalDuration", 0);
-  storyboard->create(timelinesCount, totalDuration);
-  Os::debug("Storyboard has %i timelines and duration %i ms\n", timelinesCount, totalDuration);
-
-  return readTimelines(timelinesArray_ti, timelinesCount);
-}
-
-bool StoryboardLoader::readTimelines(int timelinesArray_ti, int timelinesCount)
-{
-  int timelineObject_ti = -1;
-  for (int idxTimeline = 0; idxTimeline < timelinesCount; idxTimeline++)
-  {
-    timelineObject_ti = json.findChildIndexOf(timelinesArray_ti, timelineObject_ti);
-    if (timelineObject_ti == -1)
-    {
-      Os::assertFalse("timelinesCount");
-      return false;
-    }
-
-    int outputId = json.getIntegerValue("outputId", 1, timelineObject_ti);
-    if (outputId != idxTimeline + 1)
-    {
-      Os::debug("timeline with output %i not sequential\n", outputId);
-      return false;
-    }
-
-    int entriesArray_ti = json.findValueIndexByKeyName("entries", JSMN_ARRAY, timelineObject_ti);
-    int entriesCount = (entriesArray_ti == -1) ? 0 : json.childCount(entriesArray_ti);
-    Timeline *timeline = storyboard->addTimeline(outputId, entriesCount);
-    Os::debug("Timeline #%i on output #%i has %i entries\n", idxTimeline, outputId, entriesCount);
-
-    if (!readEntries(timeline, entriesArray_ti, entriesCount))
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-bool StoryboardLoader::readEntries(Timeline *timeline, int entriesArray_ti, int entriesCount)
-{
-  int entryObject_ti = -1;
-  for (int idxEntry = 0; idxEntry < entriesCount; idxEntry++)
-  {
-    entryObject_ti = json.findChildIndexOf(entriesArray_ti, entryObject_ti);
-    if (entryObject_ti == -1)
-    {
-      Os::assertFalse("entriesCount");
-      return false;
-    }
-
-    int time = json.getIntegerValue("time", 0, entryObject_ti);
-    int value = json.getIntegerValue("value", 0, entryObject_ti);
-    int duration = json.getIntegerValue("duration", 0, entryObject_ti);
-    Os::debug(" %5i ms) %i in %i ms\n", time, value, duration);
-
-    timeline->add(time, value, duration);
-  }
-
   return true;
 }
 
@@ -118,11 +44,11 @@ bool strCpyWithDefaultAndMaxLen(const char *src, int srcLen, char *dst, int dstS
   return true;
 }
 
-bool StoryboardLoader::tryMatchInteger(const jsmnaccept_t *acceptArg,
+bool StoryboardLoader::tryMatchInteger(const JsonAccept_t *acceptArg,
                                        const char *expectedKey,
                                        int &result)
 {
-  if ((acceptArg->type == JSMN_Accept_KeyValue) &&
+  if ((acceptArg->type == Json_Accept_KeyValue) &&
       (streq(key, expectedKey)) &&
       (!acceptArg->valueIsString))
   {
@@ -132,32 +58,32 @@ bool StoryboardLoader::tryMatchInteger(const jsmnaccept_t *acceptArg,
   return false;
 }
 
-bool StoryboardLoader::accept(const jsmnaccept_t *acceptArg)
+bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
 {
   if (!strCpyWithDefaultAndMaxLen(acceptArg->key, acceptArg->keyLength, key, bufferSize, "-"))
     return false;
   if (!strCpyWithDefaultAndMaxLen(acceptArg->value, acceptArg->valueLength, value, bufferSize, "-"))
     return false;
 
-  jsmnaccepttype_t acceptType = acceptArg->type;
+  JsonAcceptType_t acceptType = acceptArg->type;
 
   /*
   const char *acceptTypeDescr;
   switch (acceptType)
   {
-  case JSMN_Accept_KeyValue:
+  case Json_Accept_KeyValue:
     acceptTypeDescr = "KeyValue";
     break;
-  case JSMN_Accept_ObjectBegin:
+  case Json_Accept_ObjectBegin:
     acceptTypeDescr = "ObjectBegin";
     break;
-  case JSMN_Accept_ObjectEnd:
+  case Json_Accept_ObjectEnd:
     acceptTypeDescr = "ObjectEnd";
     break;
-  case JSMN_Accept_ArrayBegin:
+  case Json_Accept_ArrayBegin:
     acceptTypeDescr = "ArrayBegin";
     break;
-  case JSMN_Accept_ArrayEnd:
+  case Json_Accept_ArrayEnd:
     acceptTypeDescr = "ArrayEnd";
     break;
   default:
@@ -170,7 +96,7 @@ bool StoryboardLoader::accept(const jsmnaccept_t *acceptArg)
   switch (state)
   {
   case SLS_Begin:
-    if (acceptType == JSMN_Accept_ArrayBegin && streq(key, "timelines"))
+    if (acceptType == Json_Accept_ArrayBegin && streq(key, "timelines"))
     {
       Os::debug("timelines [\n");
       state = SLS_TimelinesArray;
@@ -179,14 +105,14 @@ bool StoryboardLoader::accept(const jsmnaccept_t *acceptArg)
     break;
 
   case SLS_TimelinesArray:
-    if (acceptType == JSMN_Accept_ObjectBegin && streq(key, "-"))
+    if (acceptType == Json_Accept_ObjectBegin && streq(key, "-"))
     {
       Os::debug("  timeline {\n");
       tempTimeline.clear();
       state = SLS_Timeline;
       return true;
     }
-    if (acceptType == JSMN_Accept_ArrayEnd && streq(key, "timelines"))
+    if (acceptType == Json_Accept_ArrayEnd && streq(key, "timelines"))
     {
       Os::debug("timelines ]\n");
       state = SLS_End;
@@ -205,14 +131,14 @@ bool StoryboardLoader::accept(const jsmnaccept_t *acceptArg)
       return true;
     }
 
-    if (acceptType == JSMN_Accept_ArrayBegin && streq(key, "entries"))
+    if (acceptType == Json_Accept_ArrayBegin && streq(key, "entries"))
     {
       Os::debug("    entries [\n");
       state = SLS_EntriesArray;
       return true;
     }
 
-    if (acceptType == JSMN_Accept_ObjectEnd && streq(key, "-"))
+    if (acceptType == Json_Accept_ObjectEnd && streq(key, "-"))
     {
       // Timeline finished, add it to the storyboard
       Os::debug("  timeline }\n");
@@ -233,14 +159,14 @@ bool StoryboardLoader::accept(const jsmnaccept_t *acceptArg)
     break;
 
   case SLS_EntriesArray:
-    if (acceptType == JSMN_Accept_ObjectBegin && streq(key, "-"))
+    if (acceptType == Json_Accept_ObjectBegin && streq(key, "-"))
     {
       Os::debug("      entry {\n");
       tempTimelineEntry.clear();
       state = SLS_Entry;
       return true;
     }
-    if (acceptType == JSMN_Accept_ArrayEnd && streq(key, "entries"))
+    if (acceptType == Json_Accept_ArrayEnd && streq(key, "entries"))
     {
       Os::debug("    entries ]\n");
       state = SLS_Timeline;
@@ -273,7 +199,7 @@ bool StoryboardLoader::accept(const jsmnaccept_t *acceptArg)
       return true;
     }
 
-    if (acceptType == JSMN_Accept_ObjectEnd && streq(key, "-"))
+    if (acceptType == Json_Accept_ObjectEnd && streq(key, "-"))
     {
       // Entry finished, add it
       Os::debug("      entry }\n");

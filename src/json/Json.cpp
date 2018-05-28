@@ -1,294 +1,390 @@
-/* Json.cpp */
-/* Original Author: Faheem Inayat
- * Created by "Night Crue" Team @ TechShop San Jose, CA
- *
- * MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
- * and associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #include "Json.h"
 
 #include "..\os\os.h"
 
-Json::Json(const char *jsonString, size_t length, unsigned int maxTokens)
-    : maxTokenCount(maxTokens), source(jsonString), sourceLength(length)
+Json::Json(const char *source, 
+           size_t length, 
+           mbed::Callback<bool(const JsonAccept_t *)> accept)
+    : source(source), sourceLength(length), accept(accept)
 {
-  tokens = new jsmntok_t[maxTokenCount];
+  
 }
 
-Json::Json(const Json &)
-    : maxTokenCount(0), source(NULL), sourceLength(0)
+void Json::fillAccept(JsonAccept_t *acceptArg, JsonAcceptType_t type, const char *source, ParserState_t *parentState, int valueStart, int valueLength, bool valueIsString)
 {
-  tokenCount = 0;
-  tokens = NULL;
-}
-
-Json::~Json()
-{
-  delete[] tokens;
-}
-
-void Json::parse(mbed::Callback<bool(const jsmnaccept_t*)> accept)
-{
-  jsmn_parser parser;
-  jsmn_init(&parser);
-  tokenCount = jsmn_parse(&parser, source, sourceLength, accept);
-}
-
-int Json::findKeyIndex(const char *key, const int &startingAt) const
-{
-  int retVal = -1;
-
-  int i = startingAt + 1;
-  if (i < 0)
+  acceptArg->type = type;
+  acceptArg->tokenIdx = 0;
+  //Os::debug("tokenKey->start: %i, tokenKey->end: %i\n", tokenKey->start, tokenKey->end);
+  if (parentState->keyLength <= 0)
   {
-    i = 0;
+    // It's an object or array not yet completed, pass a null name
+    acceptArg->key = NULL;
+    acceptArg->keyLength = 0;
+  }
+  else
+  {
+    acceptArg->key = &source[parentState->keyStart];
+    acceptArg->keyLength = parentState->keyLength;
   }
 
-  for (; i < tokenCount; i++)
+  acceptArg->valueIsString = valueIsString;
+  if (valueLength <= 0)
   {
-    jsmntok_t t = tokens[i];
-
-    if (t.type == JSMN_KEY)
-    {
-      size_t keyLength = (size_t)(t.end - t.start);
-      if ((strlen(key) == keyLength) && (strncmp(source + t.start, key, keyLength) == 0))
-      {
-        retVal = i;
-        break;
-      }
-    }
+    acceptArg->value = NULL;
+    acceptArg->valueLength = 0;
   }
-
-  return retVal;
+  else
+  {
+    acceptArg->value = &source[valueStart];
+    acceptArg->valueLength = valueLength;
+  }
 }
 
-int Json::findKeyIndexIn(const char *key, const int &parentIndex) const
+inline bool isWhitespace(char c)
 {
-  int retVal = -1;
-
-  if (isValidToken(parentIndex))
+  switch (c)
   {
-    for (int i = parentIndex + 1; i < tokenCount; i++)
-    {
-      jsmntok_t t = tokens[i];
-
-      if (t.end >= tokens[parentIndex].end)
-      {
-        break;
-      }
-
-      if ((t.type == JSMN_KEY) && (t.parent == parentIndex))
-      {
-        size_t keyLength = (size_t)(t.end - t.start);
-        if ((strlen(key) == keyLength) && (strncmp(source + t.start, key, keyLength) == 0))
-        {
-          retVal = i;
-          break;
-        }
-      }
-    }
+    case '\t':
+    case '\r':
+    case '\n':
+    case ' ':
+      return true;
   }
-
-  return retVal;
+  return false;
 }
 
-int Json::findChildIndexOf(const int &parentIndex, const int &startingAt) const
+bool isStartOfPrimitiveValue(char c)
 {
-  int retVal = -1;
-
-  if (isValidToken(parentIndex))
+  switch (c)
   {
-
-    jsmntype_t type = tokens[parentIndex].type;
-    if ((type == JSMN_KEY) || (type == JSMN_OBJECT) || (type == JSMN_ARRAY))
-    {
-      /*
-      int i = startingAt + 1;
-      if (startingAt < 0)
-      {
-        i = 0;
-      }
-
-      for (i += parentIndex; i < tokenCount; i++)
-      */
-      int i = startingAt < 0 ? parentIndex + 1 : startingAt + 1;
-      for (; i < tokenCount; i++)
-      {
-        if (tokens[i].parent == parentIndex)
-        {
-          retVal = i;
-          break;
-        }
-      }
-    }
+    case '-':
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+    case 't':
+    case 'f':
+    case 'n':
+      return true;
   }
-
-  return retVal;
+  return false;
 }
 
-bool Json::matches(const int &tokenIndex, const char *value) const
+bool Json::tryPushStack(ParserState_t* stack, int& size, int maxSize,
+                        ParserStateState_t state, int keyStart, int keyLength)
 {
-  bool retVal = false;
-
-  if (isValidToken(tokenIndex))
+  if (size == maxSize)
   {
-    jsmntok_t token = tokens[tokenIndex];
-    retVal = (strncmp(source + token.start, value, (token.end - token.start)) == 0);
-  }
-
-  return retVal;
-}
-
-bool Json::tokenIntegerValue(const int tokenIndex, int &returnValue) const
-{
-  if (type(tokenIndex) != JSMN_PRIMITIVE)
-  {
-    Os::debug("Token is not primitive\n");
     return false;
   }
 
-  int len = tokenLength(tokenIndex);
-  char *tok = new char[len + 1];
-  strncpy(tok, tokenAddress(tokenIndex), len);
-  tok[len] = 0;
-  returnValue = atoi(tok);
-  delete[] tok;
+  stack[size].state = state;
+  stack[size].keyStart = keyStart;
+  stack[size].keyLength = keyLength;
+  size += 1;
+
   return true;
 }
 
-int Json::findValueIndexByKeyName(const char *name, jsmntype_t expectedType, int parentIndex) const
+/**
+ * Fills next available token with JSON primitive.
+ */
+bool Json::parsePrimitive(int& start, int& length)
 {
-  int keyIdx = findKeyIndexIn(name, parentIndex);
-  if (keyIdx == -1)
+  start = pos;
+
+  for (; pos < sourceLength && source[pos] != '\0'; pos++)
   {
-    Os::debug("key not found: %s\n", name);
-    return -1;
-  }
-
-  int valueIdx = findChildIndexOf(keyIdx, -1);
-  if (valueIdx == -1)
-  {
-    Os::debug("value not found for key: %s\n", name);
-    return -1;
-  }
-
-  if (type(valueIdx) != expectedType)
-  {
-    Os::debug("Token is not primitive\n");
-    return -1;
-  }
-
-  return valueIdx;
-}
-
-int Json::getIntegerValue(const char *name, int defaultValue, int parentIndex) const
-{
-  int valueIdx = findValueIndexByKeyName(name, JSMN_PRIMITIVE, parentIndex);
-  if (valueIdx == -1)
-  {
-    return defaultValue;
-  }
-
-  int returnValue;
-  if (!tokenIntegerValue(valueIdx, returnValue))
-  {
-    returnValue = defaultValue;
-  }
-  return returnValue;
-}
-
-int Json::tokenNumberValue(const int tokenIndex, float &returnValue) const
-{
-  int retVal = -1;
-
-  if (type(tokenIndex) == JSMN_PRIMITIVE)
-  {
-    int len = tokenLength(tokenIndex);
-    char *tok = new char[len + 1];
-    strncpy(tok, tokenAddress(tokenIndex), len);
-    tok[len] = 0;
-    returnValue = atof(tok);
-    delete[] tok;
-    retVal = 0;
-  }
-
-  return retVal;
-}
-
-int Json::tokenBooleanValue(const int tokenIndex, bool &returnValue) const
-{
-  int retVal = -1;
-
-  if (type(tokenIndex) == JSMN_PRIMITIVE)
-  {
-    returnValue = matches(tokenIndex, "true");
-    retVal = 0;
-  }
-
-  return retVal;
-}
-
-char *Json::unescape(char *jsonString)
-{
-  if (jsonString != NULL)
-  {
-    int stringIndex = 0;
-    int indentLevel = 0;
-    int quoteCount = 0;
-    for (int i = 0; jsonString[i] != 0; i++)
+    switch (source[pos])
     {
-      switch (jsonString[i])
-      {
-      case '{':
-        indentLevel++;
-        break;
-
+      case '\t':
+      case '\r':
+      case '\n':
+      case ' ':
+      case ',':
+      case ']':
       case '}':
-        indentLevel--;
-        if (indentLevel == 0)
-        {
-          // Just close and return the first valid JSON object.  No need to handle complex cases.
-          jsonString[stringIndex++] = '}';
-          jsonString[stringIndex] = 0;
-          return jsonString;
-        }
-        break;
-
-      case '\\':
-        i++;
-        break;
-
-      case '"':
-        quoteCount++;
-        break;
-      }
-
-      if (indentLevel > 0)
       {
-        if (quoteCount == 0)
-        {
-          return jsonString; //No need to unescape.  JsonString needs to be already escaped
-        }
-        jsonString[stringIndex++] = jsonString[i];
+        length = pos - start;
+        // pos is pointing to the char that terminated the primitive value, 
+        // go back one char as it does not belong to the primitive value
+        pos--; 
+        return true;
       }
     }
-    jsonString[stringIndex] = 0;
+    if (source[pos] < 32 || source[pos] >= 127)
+    {
+      return false;
+    }
+  }
+  /* primitive must be followed by a comma/object/array */
+  return false;
+}
+
+/**
+ * Fills next token with JSON string.
+ */
+bool Json::parseString(int& start, int& length)
+{
+  start = pos;
+  pos++;
+
+  /* Skip starting quote */
+  for (; pos < sourceLength && source[pos] != '\0'; pos++)
+  {
+    char c = source[pos];
+
+    /* Quote: end of string */
+    if (c == '\"')
+    {
+      start = start + 1;
+      length = pos - start;
+      // Do not increment pos, the caller will do it in the next iteration cycle
+      return true;
+    }
+
+    /* Backslash: Quoted symbol expected */
+    if (c == '\\' && pos + 1 < sourceLength)
+    {
+      int i;
+      pos++;
+      switch (source[pos])
+      {
+      /* Allowed escaped symbols */
+      case '\"':
+      case '/':
+      case '\\':
+      case 'b':
+      case 'f':
+      case 'r':
+      case 'n':
+      case 't':
+        break;
+        /* Allows escaped symbol \uXXXX */
+      case 'u':
+        pos++;
+        for (i = 0; i < 4 && pos < sourceLength && source[pos] != '\0'; i++)
+        {
+          /* If it isn't a hex character we have an error */
+          if (!((source[pos] >= 48 && source[pos] <= 57) || /* 0-9 */
+                (source[pos] >= 65 && source[pos] <= 70) || /* A-F */
+                (source[pos] >= 97 && source[pos] <= 102)))
+          { /* a-f */
+            return false;
+          }
+          pos++;
+        }
+        pos--;
+        break;
+        /* Unexpected symbol */
+      default:
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+bool Json::tryCallCallbackAndPopStack(ParserState_t* stateStack, int& stateStackSize, 
+                                      JsonAcceptType_t type,
+                                      int valueStart, int valueLength, bool valueIsString)
+{
+  JsonAccept_t acceptArg;
+
+  if (stateStackSize > 1)
+  {
+    ParserState_t* parentState = &stateStack[stateStackSize - 2];
+    // We have parsed a primitive value at the beginning state, signal it
+    // The parent can be either in Key state or in Array state
+    fillAccept(&acceptArg, type, source, parentState, valueStart, valueLength, valueIsString);
+    if (!accept.call(&acceptArg))
+    {
+      // Nothing to do, a primitive has no children to skip
+    }
+    // Now pop the state, putting it into the next state based on its current state
+    if (parentState->state == PS_OBJECT_KEY)
+    {
+      parentState->state = PS_OBJECT_KEY_VALUE_END;
+    } else if (parentState->state == PS_ARRAY) {
+      parentState->state = PS_ARRAY_VALUE_END;
+    } else {
+      Os::assertFalse("Parent state is unexpected");
+      return false;
+    }
+    stateStackSize -= 1;
+  } else {
+    // It's a top level object, nothing else must follow
+    // TODO call accept callback to signal parse end
+    stateStack[stateStackSize - 1].state = PS_END;
+  }
+  return true;
+}
+
+JSonParseResult_t Json::parse()
+{
+  pos = 0;
+
+  JsonAccept_t acceptArg;
+
+  const int MaxStack = 10;
+  int stateStackSize = 0;
+  ParserState_t stateStack[MaxStack];
+  tryPushStack(stateStack, stateStackSize, MaxStack, PS_START, 0, 0);
+
+  //TODO
+  int skipDepth = 0; //If >0 we need to skip subtrees until we decrease it to 0
+
+  for (; pos < sourceLength && source[pos] != '\0'; pos++)
+  {
+    // If we don't have a current state, it was popped because the value was parsed completely
+    if (stateStackSize == 0)
+    {
+      return Json_Error_Invalid;
+    }
+
+    char c = source[pos];
+
+    // Ignore all whitespace
+    if (isWhitespace(c))
+    {
+      continue;
+    }
+
+    ParserState_t* currState = &stateStack[stateStackSize - 1];
+    switch (currState->state)
+    {
+      case PS_START:
+        //When starting we can have an object, an array
+        if (c == '{' || c == '[')
+        {
+          bool isObj = (c == '{');
+          if (stateStackSize > 1)
+          {
+            ParserState_t* parentState = &stateStack[stateStackSize - 2];
+            // We have parsed a primitive value at the beginning state, signal it
+            // The parent can be either in Key state or in Array state
+            fillAccept(&acceptArg, isObj ? Json_Accept_ObjectBegin : Json_Accept_ArrayBegin, source, parentState, 0, 0, false);
+            if (!accept.call(&acceptArg))
+            {
+              // TODO skip state
+            }
+          } else {
+            // TODO It's a top level object, don't signal for now
+          }
+          // TODO Signal object begin
+          currState->state = isObj ? PS_OBJECT : PS_ARRAY;
+          // When entering PS_ARRAY, push a new PS_START state that will parse the first value
+          if (!isObj)
+          {
+            if (!tryPushStack(stateStack, stateStackSize, MaxStack, PS_START, 0, 0))
+              return Json_Error_NoMemory;
+          }
+        } else if (isStartOfPrimitiveValue(c) || c == '\"')
+        {
+          bool isString = (c == '\"');
+          int valueStart;
+          int valueLength;
+          bool parsed;
+          if (isString)
+            parsed = parseString(valueStart, valueLength);
+          else 
+            parsed = parsePrimitive(valueStart, valueLength);
+
+          if (!parsed)
+            return Json_Error_Invalid;
+
+          if (!tryCallCallbackAndPopStack(stateStack, stateStackSize, Json_Accept_KeyValue, valueStart, valueLength, isString))
+            return Json_Error_Invalid;
+
+        } else 
+        {
+          // Unexpected char
+          return Json_Error_Invalid;
+        }
+        break;
+
+      case PS_OBJECT:
+        //When in object state, we can only have a key
+        if (c == '\"')
+        {
+          if (!parseString(currState->keyStart, currState->keyLength))
+            return Json_Error_Invalid;
+          
+          currState->state = PS_OBJECT_KEY;
+        } else 
+        {
+          // Unexpected char
+          return Json_Error_Invalid;
+        }
+        break;
+
+      case PS_OBJECT_KEY:
+        if (c == ':')
+        {
+          // We now need a value, to do this push a new PS_START state in the stack
+          // This is equivalent to a function call
+          // The next state will be set when popping the stack and it will be PS_OBJECT_KEY_VALUE_END
+          if (!tryPushStack(stateStack, stateStackSize, MaxStack, PS_START, 0, 0))
+            return Json_Error_NoMemory;
+          
+        } else 
+        {
+          // Unexpected char
+          return Json_Error_Invalid;
+        }
+        break;
+
+      case PS_OBJECT_KEY_VALUE_END:
+        if (c == ',')
+        {
+          currState->state = PS_OBJECT;
+        } else if (c == '}')
+        {
+          if (!tryCallCallbackAndPopStack(stateStack, stateStackSize, Json_Accept_ObjectEnd, 0, 0, false))
+            return Json_Error_Invalid;
+          
+        } else 
+        {
+          // Unexpected char
+          return Json_Error_Invalid;
+        }
+        break;
+
+      case PS_ARRAY:
+        // We never handle PS_ARRAY directly: when this state is set, a new PS_START is pushed.
+        // When the state gets popped it goes to PS_ARRAY_VALUE_END which either terminates the array or pushes a new start
+        return Json_Error_Invalid;
+
+      case PS_ARRAY_VALUE_END:
+        if (c == ',')
+        {
+          currState->state = PS_ARRAY;
+          if (!tryPushStack(stateStack, stateStackSize, MaxStack, PS_START, 0, 0))
+            return Json_Error_NoMemory;
+          
+        } else if (c == ']')
+        {
+          if (!tryCallCallbackAndPopStack(stateStack, stateStackSize, Json_Accept_ArrayEnd, 0, 0, false))
+            return Json_Error_Invalid;
+          
+        } else 
+        {
+          // Unexpected char
+          return Json_Error_Invalid;
+        }
+        break;
+
+        // Unknown state
+      default:
+        return Json_Error_Invalid;
+    }
   }
 
-  return jsonString;
+  return Json_Parsed;
 }
