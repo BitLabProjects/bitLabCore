@@ -46,7 +46,7 @@ void Json::parse(mbed::Callback<bool(const jsmnaccept_t*)> accept)
 {
   jsmn_parser parser;
   jsmn_init(&parser);
-  tokenCount = jsmn_parse(&parser, source, sourceLength, tokens, maxTokenCount, accept);
+  tokenCount = jsmn_parse(&parser, source, sourceLength, accept);
 }
 
 int Json::findKeyIndex(const char *key, const int &startingAt) const

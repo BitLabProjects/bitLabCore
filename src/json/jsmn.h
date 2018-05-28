@@ -111,9 +111,7 @@ extern "C"
      */
     int jsmn_parse ( jsmn_parser *parser, 
                      const char *js, 
-                     size_t len, 
-                     jsmntok_t *tokens, 
-                     unsigned int num_tokens,
+                     size_t len,
                      mbed::Callback<bool(const jsmnaccept_t*)> accept);
 
 #ifdef __cplusplus
