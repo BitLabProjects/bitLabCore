@@ -8,7 +8,9 @@
 #include "storyboard\storyboard_player.h"
 #include "boards\triac_board.h"
 #include "boards\relay_board.h"
-#include "os\SDFileSystem.h"
+#include "FATFileSystem.h"
+#include "os\SDBlockDevice.h"
+#include "wav\wav_player.h"
 
 class Presepio
 {
@@ -19,7 +21,8 @@ public:
   void mainLoop();
 
 private:
-  SDFileSystem sd;
+  SDBlockDevice sdbd;
+  FATFileSystem fs;
   Serial pc;
 
   Storyboard storyboard;
@@ -33,6 +36,8 @@ private:
   volatile bool tick_received;
   volatile millisec64 tick_count;
   volatile millisec64 currTime; //Time in milliseconds
+
+  WavPlayer wavPlayer;
 
   void tick();
 };

@@ -22,7 +22,7 @@ public:
 
 private:
   // show connection to 50Hz external signal (230Vac)
-  DigitalOut led_heartbeat;
+  //DigitalOut led_heartbeat;
   DigitalOut outputs[ANALOGOUT_COUNT];
 
   InterruptIn main_crossover;

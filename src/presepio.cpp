@@ -8,13 +8,15 @@
 #define USE_JSON true
 #define USE_ORIGINAL_TIMELINE false
 
-Presepio::Presepio() : sd(PC_12, PC_11, PC_10, PD_2, "sd"),
+Presepio::Presepio() : sdbd(PC_12, PC_11, PC_10, PD_2),
+                       fs("sd"),
                        pc(USBTX, USBRX),
                        storyboard(),
                        relay_board(),
                        triac_board(),
                        storyboardPlayer(&storyboard, &relay_board, &triac_board)
 {
+  
 }
 
 void Presepio::init()
@@ -32,12 +34,11 @@ void Presepio::init()
   pc.printf("Used heap: %i bytes\n", Os::getUsedHeap());
 
   pc.printf("Mounting SD........");
-  int sdErrCode = sd.disk_initialize();
+  int sdErrCode = fs.mount(&sdbd);
   if (sdErrCode == 0)
     pc.printf("[OK]\n");
   else
     pc.printf("[ERR]\n");
-
 
   if (USE_JSON)
   {
@@ -50,7 +51,7 @@ void Presepio::init()
   {
     storyboard.create(40, 4000);
 
-    Timeline* t = NULL;
+    Timeline *t = NULL;
     //           time,#out,value,duration
     // analog output_1
     t = storyboard.addTimeline(1, 3);
@@ -236,7 +237,7 @@ void Presepio::init()
   }
   else
   {
-    Timeline* t = NULL;
+    Timeline *t = NULL;
 
     storyboard.create(40, 6000);
     // storyboard.addTimeline(8);
@@ -287,20 +288,30 @@ void Presepio::mainLoop()
   bool printDebug = false;
 
   storyboardPlayer.mainLoop();
+  wavPlayer.mainLoop();
 
   if (pc.readable())
   {
     pc.gets(readBuffer, BUFFER_SIZE - 1);
     //pc.printf("Received <%s> with %i chars\n", readBuffer, strlen(readBuffer));
-    if (strcmp(readBuffer, "play\n") == 0) {
+    if (strcmp(readBuffer, "play\n") == 0)
+    {
       storyboardPlayer.play();
       pc.printf("Playing...\n");
-    } else if (strcmp(readBuffer, "pause\n") == 0) {
+    }
+    else if (strcmp(readBuffer, "pause\n") == 0)
+    {
       storyboardPlayer.pause();
       pc.printf("Paused\n");
-    } else if (strcmp(readBuffer, "stop\n") == 0) {
+    }
+    else if (strcmp(readBuffer, "stop\n") == 0)
+    {
       storyboardPlayer.stop();
       pc.printf("Stopped\n");
+    }
+    else if (strcmp(readBuffer, "playwav\n") == 0)
+    {
+      wavPlayer.play();
     }
   }
 
@@ -337,5 +348,7 @@ void Presepio::tick()
   currTime = 1000 * tick_count / TICKS_PER_SECOND;
 
   //Send only the delta, so storyboardPlayer can keep its time with just a sum
-  storyboardPlayer.tick(currTime - prevCurrTime);
+  millisec64 timeDelta = currTime - prevCurrTime;
+  storyboardPlayer.tick(timeDelta);
+  wavPlayer.tick(timeDelta);
 }

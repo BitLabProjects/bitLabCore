@@ -3,7 +3,7 @@
 
 #include "../os/os.h"
 
-TriacBoard::TriacBoard() : led_heartbeat(LED2),
+TriacBoard::TriacBoard() : /*led_heartbeat(LED2),*/
                            outputs({(D2), (D3), (D4), (D5), (D6), (D7), (D8), (D9)}),
                            main_crossover(D10)
 {
@@ -98,6 +98,6 @@ void TriacBoard::main_crossover_rise()
   if (zeroCrossesCount == RISE_PER_SECOND)
   {
     zeroCrossesCount = 0;
-    led_heartbeat = !led_heartbeat;
+    //led_heartbeat = !led_heartbeat;
   }
 }

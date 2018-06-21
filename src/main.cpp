@@ -1,8 +1,8 @@
 #include "presepio.h"
 
-Presepio presepio;
 
 int main() {
+  Presepio presepio;
   presepio.init();
   while(1) {
     presepio.mainLoop();
