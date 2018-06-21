@@ -10,7 +10,7 @@ Json::Json(const char *source,
   
 }
 
-void Json::fillAccept(JsonAccept_t *acceptArg, JsonAcceptType_t type, const char *source, ParserState_t *parentState, int valueStart, int valueLength, bool valueIsString)
+void Json::fillAccept(JsonAccept_t *acceptArg, JsonAcceptType_t type, ParserState_t *parentState, int valueStart, int valueLength, bool valueIsString)
 {
   acceptArg->type = type;
   acceptArg->tokenIdx = 0;
@@ -202,7 +202,7 @@ bool Json::tryCallCallbackAndPopStack(ParserState_t* stateStack, int& stateStack
     ParserState_t* parentState = &stateStack[stateStackSize - 2];
     // We have parsed a primitive value at the beginning state, signal it
     // The parent can be either in Key state or in Array state
-    fillAccept(&acceptArg, type, source, parentState, valueStart, valueLength, valueIsString);
+    fillAccept(&acceptArg, type, parentState, valueStart, valueLength, valueIsString);
     if (!accept.call(&acceptArg))
     {
       // Nothing to do, a primitive has no children to skip
@@ -269,7 +269,7 @@ JSonParseResult_t Json::parse()
             ParserState_t* parentState = &stateStack[stateStackSize - 2];
             // We have parsed a primitive value at the beginning state, signal it
             // The parent can be either in Key state or in Array state
-            fillAccept(&acceptArg, isObj ? Json_Accept_ObjectBegin : Json_Accept_ArrayBegin, source, parentState, 0, 0, false);
+            fillAccept(&acceptArg, isObj ? Json_Accept_ObjectBegin : Json_Accept_ArrayBegin, parentState, 0, 0, false);
             if (!accept.call(&acceptArg))
             {
               // TODO skip state

@@ -14,9 +14,9 @@ bool StoryboardLoader::load()
   storyboard->create(8 + 32, totalDurationTODO);
   state = SLS_Begin;
   tempTimeline.create(1, 100);
-  Os::debug("Parsing...\n");
+  //Os::debug("Parsing...\n");
   json.parse();
-  Os::debug("Parsed\n");
+  //Os::debug("Parsed\n");
   return true;
 }
 
@@ -98,7 +98,7 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
   case SLS_Begin:
     if (acceptType == Json_Accept_ArrayBegin && streq(key, "timelines"))
     {
-      Os::debug("timelines [\n");
+      //Os::debug("timelines [\n");
       state = SLS_TimelinesArray;
       return true;
     }
@@ -107,14 +107,14 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
   case SLS_TimelinesArray:
     if (acceptType == Json_Accept_ObjectBegin && streq(key, "-"))
     {
-      Os::debug("  timeline {\n");
+      //Os::debug("  timeline {\n");
       tempTimeline.clear();
       state = SLS_Timeline;
       return true;
     }
     if (acceptType == Json_Accept_ArrayEnd && streq(key, "timelines"))
     {
-      Os::debug("timelines ]\n");
+      //Os::debug("timelines ]\n");
       state = SLS_End;
       return true;
     }
@@ -126,14 +126,14 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     int outputId;
     if (tryMatchInteger(acceptArg, "outputId", outputId))
     {
-      Os::debug("    outputId=%i\n", outputId);
+      //Os::debug("    outputId=%i\n", outputId);
       tempTimeline.setOutput(outputId);
       return true;
     }
 
     if (acceptType == Json_Accept_ArrayBegin && streq(key, "entries"))
     {
-      Os::debug("    entries [\n");
+      //Os::debug("    entries [\n");
       state = SLS_EntriesArray;
       return true;
     }
@@ -141,7 +141,7 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     if (acceptType == Json_Accept_ObjectEnd && streq(key, "-"))
     {
       // Timeline finished, add it to the storyboard
-      Os::debug("  timeline }\n");
+      //Os::debug("  timeline }\n");
 
       Timeline *dstTimeline = storyboard->addTimeline(tempTimeline.getOutput(), tempTimeline.getEntriesCount());
       tempTimeline.moveFirst();
@@ -161,14 +161,14 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
   case SLS_EntriesArray:
     if (acceptType == Json_Accept_ObjectBegin && streq(key, "-"))
     {
-      Os::debug("      entry {\n");
+      //Os::debug("      entry {\n");
       tempTimelineEntry.clear();
       state = SLS_Entry;
       return true;
     }
     if (acceptType == Json_Accept_ArrayEnd && streq(key, "entries"))
     {
-      Os::debug("    entries ]\n");
+      //Os::debug("    entries ]\n");
       state = SLS_Timeline;
       return true;
     }
@@ -178,7 +178,7 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     int time;
     if (tryMatchInteger(acceptArg, "time", time))
     {
-      Os::debug("        time=%i\n", time);
+      //Os::debug("        time=%i\n", time);
       tempTimelineEntry.time = time;
       return true;
     }
@@ -186,7 +186,7 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     int duration;
     if (tryMatchInteger(acceptArg, "duration", duration))
     {
-      Os::debug("        duration=%i\n", duration);
+      //Os::debug("        duration=%i\n", duration);
       tempTimelineEntry.duration = duration;
       return true;
     }
@@ -194,7 +194,7 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     int value;
     if (tryMatchInteger(acceptArg, "value", value))
     {
-      Os::debug("        value=%i\n", value);
+      //Os::debug("        value=%i\n", value);
       tempTimelineEntry.value = value;
       return true;
     }
@@ -202,7 +202,7 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     if (acceptType == Json_Accept_ObjectEnd && streq(key, "-"))
     {
       // Entry finished, add it
-      Os::debug("      entry }\n");
+      //Os::debug("      entry }\n");
       tempTimeline.add(tempTimelineEntry.time, tempTimelineEntry.value, tempTimelineEntry.duration);
       state = SLS_EntriesArray;
       return true;

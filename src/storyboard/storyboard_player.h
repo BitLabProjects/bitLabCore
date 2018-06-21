@@ -11,13 +11,6 @@ struct PlayBufferEntry
   TimelineEntry entry;
 };
 
-enum PlayStatus
-{
-  Stopped,
-  Paused,
-  Playing
-};
-
 class StoryboardPlayer {
 public:
   StoryboardPlayer(Storyboard *storyboard, RelayBoard *relay_board, TriacBoard *triac_board);
@@ -36,6 +29,12 @@ private:
   TriacBoard *triac_board;
 
   //Circular buffer for storyboard playing
+  enum PlayStatus
+  {
+    Stopped,
+    Paused,
+    Playing
+  };
   PlayStatus playStatus;
   int playBufferCount;
   PlayBufferEntry* playBuffer;
