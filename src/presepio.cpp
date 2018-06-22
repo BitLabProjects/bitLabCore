@@ -8,7 +8,7 @@
 #define USE_JSON true
 #define USE_ORIGINAL_TIMELINE false
 
-Presepio::Presepio() : sdbd(PC_12, PC_11, PC_10, PD_2),
+Presepio::Presepio() : sdbd(PC_12, PC_11, PC_10, PD_2, 1*1000*1000, 42*1000*1000),
                        fs("sd"),
                        pc(USBTX, USBRX),
                        storyboard(),
@@ -346,6 +346,7 @@ void Presepio::tick()
 
   millisec64 prevCurrTime = currTime;
   currTime = 1000 * tick_count / TICKS_PER_SECOND;
+  Os::setCurrTime(currTime);
 
   //Send only the delta, so storyboardPlayer can keep its time with just a sum
   millisec64 timeDelta = currTime - prevCurrTime;

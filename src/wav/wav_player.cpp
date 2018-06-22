@@ -1,18 +1,20 @@
 #include "wav_player.h"
 #include "../utils.h"
+#include "../os/os.h"
 
-WavPlayer::WavPlayer(): led(LED2)
+WavPlayer::WavPlayer() : led(LED2)
 {
+  counter = 0;
   wavFile = NULL;
-  sampleBuffersCount = 2;
+  sampleBuffersCount = 6;
   sampleBuffers = new WavSampleBuffer[sampleBuffersCount];
-  for(int i=0; i<sampleBuffersCount; i++)
+  for (int i = 0; i < sampleBuffersCount; i++)
   {
-    sampleBuffers[i].allocate(1024 * 10);
+    sampleBuffers[i].allocate(1024 * 4);
   }
   stop();
 
-  led.period_ms(1);
+  led.period_us(1);
 }
 
 bool WavPlayer::play()
@@ -20,22 +22,23 @@ bool WavPlayer::play()
   if (playStatus != Stopped)
     return false;
 
-  wavFile = fopen("/sd/imperial_march.wav","r");
+  wavFile = fopen("/sd/imperial_march.wav", "r");
 
-  if (!wavDecoder.load(wavFile)) {
+  if (!wavDecoder.load(wavFile))
+  {
     fclose(wavFile);
     return false;
   }
 
   sampleBuffersMaxTime = wavDecoder.wavHeader.getDuration();
-  printf("Wav loaded:\nChannels: %li\nSample rate: %li\nBits per sample: %li\nData length: %li\nDuration: %li ms\n", 
-            wavDecoder.wavHeader.numChannels, 
-            wavDecoder.wavHeader.sampleRate,
-            wavDecoder.wavHeader.bitsPerSample,
-            wavDecoder.wavHeader.dataLength,
-            sampleBuffersMaxTime);
+  printf("Wav loaded:\nChannels: %li\nSample rate: %li\nBits per sample: %li\nData length: %li\nDuration: %li ms\n",
+         wavDecoder.wavHeader.numChannels,
+         wavDecoder.wavHeader.sampleRate,
+         wavDecoder.wavHeader.bitsPerSample,
+         wavDecoder.wavHeader.dataLength,
+         sampleBuffersMaxTime);
 
-  printf("%i ms -> %li samples\n", 
+  printf("%i ms -> %li samples\n",
          500, wavDecoder.wavHeader.convertTimeInSamples(500));
 
   if (!fillSampleBuffer())
@@ -56,6 +59,7 @@ void WavPlayer::stop()
   sampleBuffersHeadTimeInSamples = 0;
   sampleBuffersTailTimeInSamples = 0;
   playerTime = 0;
+  underflow = false;
   if (wavFile)
   {
     fclose(wavFile);
@@ -66,37 +70,56 @@ void WavPlayer::stop()
 
 void WavPlayer::mainLoop()
 {
+  /*
+  if (counter++ % 100000 == 0)
+  {
+    int32_t playerTimeInSamples = wavDecoder.wavHeader.convertTimeInSamples(playerTime);
+    printf("play: %i, playerTime: %lli ms, playerTimeInSamples: %li, sampleBuffersTailTimeInSamples: %li\n", 
+           playStatus, playerTime, playerTimeInSamples, sampleBuffersTailTimeInSamples);
+  }
+  */
+  if (underflow)
+  {
+    underflow = false;
+    printf("Underflow detected!\n");
+  }
+
   if (playStatus == Playing)
   {
-    fillSampleBuffer();
+    //millisec64 timeBefore = Os::currTime();
+    if (fillSampleBuffer())
+    {
+      //millisec64 fillTime = Os::currTime() - timeBefore;
+      //printf("fillTime: %lli ms\n", fillTime);
+    }
   }
 }
 
 bool WavPlayer::fillSampleBuffer()
 {
-  // Fill the samples buffer, return false if no more samples available
+  // Fill the samples buffer, return false if nothing was added
   int sampleBuffersLast = (sampleBuffersTail + (sampleBuffersCount - 1)) % sampleBuffersCount;
   if (sampleBuffersHead == sampleBuffersLast)
   {
-    return true; //Buffer already full
+    return false; //Buffer already full
   }
 
-  printf("Filling...\n");
+  //printf("Filling...\n");
   while (sampleBuffersHead != sampleBuffersLast)
   {
     if (!wavDecoder.readSamples(wavFile, &sampleBuffers[sampleBuffersHead]))
     {
-      printf("No more samples\n");
+      //printf("No more samples\n");
       stop();
       return false;
     }
-    printf("Samples read: %i\n", sampleBuffers[sampleBuffersHead].count);
+    //printf("Samples read: %i\n", sampleBuffers[sampleBuffersHead].count);
 
     sampleBuffersHeadTimeInSamples += sampleBuffers[sampleBuffersHead].count;
 
     sampleBuffersHead = (sampleBuffersHead + 1) % sampleBuffersCount;
   }
-  printf("Filling complete\n");
+  //printf("Filling complete\n");
 
   return true;
 }
@@ -119,22 +142,30 @@ void WavPlayer::tick(millisec64 timeDelta)
       stop();
       return;
     }
-    
+
     playerTime = newPlayerTime;
 
     WavSampleBuffer *sbEntry = &sampleBuffers[sampleBuffersTail];
     int32_t currSampleOffset = (newPlayerTimeInSamples - sampleBuffersTailTimeInSamples);
-    currSampleOffset = Utils::min(currSampleOffset, sbEntry->count - 1);
 
     // Play just the sample at the current time
-    int8_t sample = sbEntry->samples[currSampleOffset];
-    led.write(sample / 128.0f);
+    // Clamp it to avoid overflowing
+    int8_t sample = sbEntry->samples[Utils::min(currSampleOffset, sbEntry->count - 1)];
 
-    if (currSampleOffset >= sbEntry->count - 1)
+    // Use the second line when using the led as output
+    //led.write((sample+128) / 255.0f);
+    led.write(Utils::abs(sample) / 128.0f);
+
+    if (currSampleOffset >= sbEntry->count)
     {
       // Buffer completed, move to next one
       sampleBuffersTailTimeInSamples += sbEntry->count;
       sampleBuffersTail = (sampleBuffersTail + 1) % sampleBuffersCount;
     }
+  }
+  else
+  {
+    // We are playing, but there's nothing in the buffer: it's an underflow
+    underflow = true;
   }
 }

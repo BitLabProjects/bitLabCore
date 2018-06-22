@@ -4,6 +4,7 @@
 #include "mbed.h"
 #include "../config.h"
 #include "wav_decoder.h"
+#include "FastPWM.h"
 
 class WavPlayer
 {
@@ -37,7 +38,11 @@ private:
   millisec sampleBuffersMaxTime;
   volatile millisec64 playerTime;
 
-  PwmOut led;
+  int counter;
+
+  volatile bool underflow;
+
+  FastPWM led;
 
   bool fillSampleBuffer();
 };

@@ -144,13 +144,16 @@ bool WavDecoder::load(FILE *fp)
   return true;
 }
 
+const int32_t fileReadBufferSize = 10240;
+uint8_t fileReadBuffer[fileReadBufferSize];
+
 bool WavDecoder::readSamples(FILE *fp, WavSampleBuffer* sampleBuffer)
 {
   /* Calculate the number of samples that fit into the buffer
    * considering also how many samples are left from the file
    */
-  int remainingSamples = wavHeader.getSamplesPerChannelCount() - samplesAlreadyRead;
-  int samplesToRead = Utils::min(remainingSamples, sampleBuffer->size);
+  int32_t remainingSamples = wavHeader.getSamplesPerChannelCount() - samplesAlreadyRead;
+  int32_t samplesToRead = Utils::min(remainingSamples, sampleBuffer->size);
 
   if (samplesToRead <= 0)
   {
@@ -162,66 +165,87 @@ bool WavDecoder::readSamples(FILE *fp, WavSampleBuffer* sampleBuffer)
   
   int8_t *samples = sampleBuffer->samples;
 
-  unsigned char stuff8;
-  /* Is it a stereo file ? */
-  if (wavHeader.numChannels == 2)
+  int32_t bytesPerSamplexChans = wavHeader.numChannels * (wavHeader.bitsPerSample/8);
+  int32_t samplesPerFill = 5000;
+  int32_t fillCount = samplesToRead / samplesPerFill;
+  // Add one fill if not an exact multiple of 500
+  if (fillCount * samplesPerFill != samplesToRead)
   {
-    /* 8-bit ? convert 0-255 to -128-127 */
-    if (wavHeader.bitsPerSample == 8)
+    fillCount++;
+  }
+
+  //printf("Reading %i samples, %i fills, alreadyRead: %i\n", samplesToRead, fillCount, samplesAlreadyRead);
+
+  while (samplesToRead > 0) {
+    int samplesToReadThisTime = Utils::min(samplesToRead, samplesPerFill);
+    samplesToRead -= samplesToReadThisTime;
+
+    fread(fileReadBuffer, bytesPerSamplexChans, samplesToReadThisTime, fp);
+
+    uint8_t* fileReadBufferPtr = fileReadBuffer;
+
+    unsigned char stuff8;
+    /* Is it a stereo file ? */
+    if (wavHeader.numChannels == 2)
     {
-      for (int i = 0; i < samplesToRead; i++)
+      /* 8-bit ? convert 0-255 to -128-127 */
+      if (wavHeader.bitsPerSample == 8)
       {
-        fread(&stuff8, sizeof(unsigned char), 1, fp);
-        int8_t sample_L = -128 + stuff8;
-        fread(&stuff8, sizeof(unsigned char), 1, fp);
-        int8_t sample_R = -128 + stuff8;
-        *samples++ = sample_L;
+        for (int i = 0; i < samplesToReadThisTime; i++)
+        {
+          stuff8 = *fileReadBufferPtr++;
+          int8_t sample_L = -128 + stuff8;
+          stuff8 = *fileReadBufferPtr++;
+          int8_t sample_R = -128 + stuff8;
+          *samples++ = sample_L;
+        }
+      }
+      /* 16-bit ? convert signed 16 to signed 8 */
+      else
+      {
+        for (int i = 0; i < samplesToReadThisTime; i++)
+        {
+          // TODO Use all 16 bits
+          // We take only MSB of wave data...
+          stuff8 = *fileReadBufferPtr++;
+          stuff8 = *fileReadBufferPtr++;
+          int8_t sample_L = (signed char)stuff8;
+          // read right output and forget about it
+          stuff8 = *fileReadBufferPtr++;
+          stuff8 = *fileReadBufferPtr++;
+          int8_t sample_R = (signed char)stuff8;
+          *samples++ = sample_L;
+        }
       }
     }
-    /* 16-bit ? convert signed 16 to signed 8 */
+    /* Monaural file */
+    /** PATCHED FOR ARDUINO **/
     else
     {
-      for (int i = 0; i < samplesToRead; i++)
+      if (wavHeader.bitsPerSample == 8)
       {
-        // TODO Use all 16 bits
-        // We take only MSB of wave data...
-        fread(&stuff8, sizeof(char), 1, fp);
-        fread(&stuff8, sizeof(char), 1, fp);
-        int8_t sample_L = (signed char)stuff8;
-        // read right output and forget about it
-        fread(&stuff8, sizeof(char), 1, fp);
-        fread(&stuff8, sizeof(char), 1, fp);
-        int8_t sample_R = (signed char)stuff8;
-        *samples++ = sample_L;
+        for (int i = 0; i < samplesToReadThisTime; i++)
+        {
+          fread(&stuff8, sizeof(unsigned char), 1, fp);
+          int8_t sample = stuff8;
+          *samples++ = sample;
+        }
+      }
+      else
+      {
+        for (int i = 0; i < samplesToReadThisTime; i++)
+        {
+          // TODO Use all 16 bits
+          // We take only MSB of wave data...
+          stuff8 = *fileReadBufferPtr++;
+          stuff8 = *fileReadBufferPtr++;
+          int8_t sample = *((int8_t*)(&stuff8));
+          *samples++ = sample;
+        }
       }
     }
   }
-  /* Monaural file */
-  /** PATCHED FOR ARDUINO **/
-  else
-  {
-    if (wavHeader.bitsPerSample == 8)
-    {
-      for (int i = 0; i < samplesToRead; i++)
-      {
-        fread(&stuff8, sizeof(unsigned char), 1, fp);
-        int8_t sample = stuff8;
-        *samples++ = sample;
-      }
-    }
-    else
-    {
-      for (int i = 0; i < samplesToRead; i++)
-      {
-        // TODO Use all 16 bits
-        // We take only MSB of wave data...
-        fread(&stuff8, sizeof(char), 1, fp);
-        fread(&stuff8, sizeof(char), 1, fp);
-        int8_t sample = (signed char)stuff8;
-        *samples++ = sample;
-      }
-    }
-  }
+
 
   return true;
 }
