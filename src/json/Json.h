@@ -73,7 +73,7 @@ private:
     int keyLength;
   } ParserState_t;
 
-  void fillAccept(JsonAccept_t *acceptArg, JsonAcceptType_t type, const char *source, ParserState_t *parentState, int valueStart, int valueLength, bool valueIsString = false);
+  void fillAccept(JsonAccept_t *acceptArg, JsonAcceptType_t type, ParserState_t *parentState, int valueStart, int valueLength, bool valueIsString = false);
   bool tryPushStack(ParserState_t* stack, int& size, int maxSize,
                     ParserStateState_t state, int keyStart, int keyLength);
   bool tryCallCallbackAndPopStack(ParserState_t* stateStack, int& stateStackSize, 

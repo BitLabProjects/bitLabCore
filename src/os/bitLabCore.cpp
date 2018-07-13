@@ -3,7 +3,8 @@
 #include "platform/mbed_stats.h"
 
 bitLabCore::bitLabCore() : pc(USBTX, USBRX),
-                           sd(PC_12, PC_11, PC_10, PD_2, "sd"),
+                           sdbd(PC_12, PC_11, PC_10, PD_2, 1*1000*1000, 42*1000*1000),
+                           fs("sd"),
                            coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
                            modules()
 {
@@ -65,7 +66,7 @@ void bitLabCore::init()
   coreTicker.start();
 
   pc.printf("Mounting SD........");
-  int sdErrCode = sd.disk_initialize();
+  int sdErrCode = fs.mount(&sdbd);
   if (sdErrCode == 0)
     pc.printf("[OK]\n");
   else

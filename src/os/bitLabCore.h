@@ -5,7 +5,8 @@
 
 #include "mbed.h"
 
-#include "SDFileSystem.h"
+#include "FATFileSystem.h"
+#include "os\SDBlockDevice.h"
 #include "CoreTicker.h"
 #include "CoreModule.h"
 
@@ -19,7 +20,8 @@ public:
 
 private:
   Serial pc;
-  SDFileSystem sd;
+  SDBlockDevice sdbd;
+  FATFileSystem fs;
   CoreTicker coreTicker;
   void tick(millisec64 timeDelta);
 

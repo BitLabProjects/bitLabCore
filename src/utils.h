@@ -12,6 +12,9 @@ public:
       "NOP\n\t"
     );
   }
+  static inline int32_t min(int32_t a, int32_t b) {
+    return a < b ? a : b;
+  }
   static inline float min(float a, float b) {
     return a < b ? a : b;
   }

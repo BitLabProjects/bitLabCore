@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "../config.h"
+
 class Os {
 public:  
   static inline void debug(const char *format, ...)
@@ -20,6 +22,9 @@ public:
   {
     debug("Assert failed: %s\n", msg);
   }
+
+  static void setCurrTime(millisec64 value);
+  static millisec64 currTime();
 };
 
 #endif
