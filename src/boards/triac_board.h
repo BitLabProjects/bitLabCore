@@ -4,7 +4,7 @@
 #include "mbed.h"
 #include "PinNames.h"
 #include "config.h"
-#include "utils.h"
+#include "../utils.h"
 
 class TriacBoard
 {

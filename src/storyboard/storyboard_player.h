@@ -1,9 +1,10 @@
 #ifndef _STORYBOARDPLAYER_H_
 #define _STORYBOARDPLAYER_H_
 
-#include "Storyboard.h"
+#include "storyboard.h"
 #include "..\boards\triac_board.h"
 #include "..\boards\relay_board.h"
+#include "..\os\CoreModule.h"
 
 struct PlayBufferEntry
 {
@@ -18,20 +19,22 @@ enum PlayStatus
   Playing
 };
 
-class StoryboardPlayer {
+class StoryboardPlayer: public CoreModule {
 public:
-  StoryboardPlayer(Storyboard *storyboard, RelayBoard *relay_board, TriacBoard *triac_board);
+  StoryboardPlayer(RelayBoard *relay_board, TriacBoard *triac_board);
 
+  // --- CoreModule ---
   void init();
   void mainLoop();
   void tick(millisec64 timeDelta);
+  // ------------------
 
   void play();
   void pause();
   void stop();
 
 private:
-  Storyboard *storyboard;
+  Storyboard storyboard;
   RelayBoard *relay_board;
   TriacBoard *triac_board;
 
