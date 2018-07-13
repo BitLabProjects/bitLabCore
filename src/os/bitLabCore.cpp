@@ -5,7 +5,7 @@
 bitLabCore::bitLabCore() : pc(USBTX, USBRX),
                            sd(PC_12, PC_11, PC_10, PD_2, "sd"),
                            coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
-                           modules(10)
+                           modules()
 {
 }
 
@@ -16,7 +16,11 @@ void bitLabCore::addModule(CoreModule *module)
 
 void bitLabCore::run()
 {
-  init();
+  for (int i = 0; i < modules.size(); i++)
+  {
+    modules[i]->init();
+  }
+
   while (true)
   {
     // TODO Extract into a console interface module
@@ -56,6 +60,9 @@ void bitLabCore::init()
   pc.printf("    version:  0.1a    \n");
   pc.printf("======================\n");
   pc.printf("Used heap: %i bytes\n", getUsedHeap());
+  
+  pc.printf("Starting core ticker\n");
+  coreTicker.start();
 
   pc.printf("Mounting SD........");
   int sdErrCode = sd.disk_initialize();
@@ -63,11 +70,6 @@ void bitLabCore::init()
     pc.printf("[OK]\n");
   else
     pc.printf("[ERR]\n");
-
-  for (int i = 0; i < modules.size(); i++)
-  {
-    modules[i]->init();
-  }
 }
 
 void bitLabCore::tick(millisec64 timeDelta)

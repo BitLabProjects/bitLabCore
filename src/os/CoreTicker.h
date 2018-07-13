@@ -8,6 +8,8 @@ class CoreTicker {
 public:
   CoreTicker(int ticksPerSecond, mbed::Callback<void(millisec64 timeDelta)> onTickCallback);
 
+  void start();
+
 private:
   Ticker ticker;
   int ticksPerSecond;

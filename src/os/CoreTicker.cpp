@@ -1,13 +1,17 @@
 #include "CoreTicker.h"
 
-CoreTicker::CoreTicker(int ticksPerSecond, 
-                       mbed::Callback<void(millisec64 timeDelta)> onTickCallback) {
+CoreTicker::CoreTicker(int ticksPerSecond,
+                       mbed::Callback<void(millisec64 timeDelta)> onTickCallback)
+{
   this->ticksPerSecond = ticksPerSecond;
   this->onTickCallback = onTickCallback;
   currTime = 0;
   tick_received = false;
   tick_count = 0;
-  
+}
+
+void CoreTicker::start()
+{
   ticker.attach(callback(this, &CoreTicker::tick), 1.0 / ticksPerSecond);
 }
 

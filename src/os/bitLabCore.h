@@ -13,17 +13,15 @@ class bitLabCore {
 public:
   bitLabCore();
 
+  void init();
   void addModule(CoreModule* module);
   void run();
-
-protected:
-  void init();
-  void tick(millisec64 timeDelta);
 
 private:
   Serial pc;
   SDFileSystem sd;
   CoreTicker coreTicker;
+  void tick(millisec64 timeDelta);
 
   vector<CoreModule*> modules;
 

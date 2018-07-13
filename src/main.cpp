@@ -1,7 +1,15 @@
-#include "presepio.h"
+#include "os\bitLabCore.h"
+#include "boards\triac_board.h"
+#include "boards\relay_board.h"
+#include "storyboard/storyboard_player.h"
 
-Presepio presepio;
+bitLabCore core;
+
+RelayBoard relay_board;
+TriacBoard triac_board;
 
 int main() {
-  presepio.run();
+  core.init();
+  core.addModule(new StoryboardPlayer(&relay_board, &triac_board));
+  core.run();
 }
