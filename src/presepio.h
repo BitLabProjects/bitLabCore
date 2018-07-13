@@ -8,17 +8,18 @@
 #include "storyboard\storyboard_player.h"
 #include "boards\triac_board.h"
 #include "boards\relay_board.h"
+#include "os\bitLabCore.h"
 #include "os\SDFileSystem.h"
 
-class Presepio
+class Presepio: public bitLabCore
 {
 public:
   Presepio();
 
+private:
   void init();
   void mainLoop();
 
-private:
   SDFileSystem sd;
   Serial pc;
 
