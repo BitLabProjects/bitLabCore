@@ -1,8 +1,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-typedef int32_t millisec;
-typedef int64_t millisec64;
+#include "os/types.h"
 
 // this file contains tickers, clocks and timeline settings
 

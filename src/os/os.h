@@ -5,9 +5,7 @@
 #include <stdarg.h>
 
 class Os {
-public:
-  static int getUsedHeap();
-  
+public:  
   static inline void debug(const char *format, ...)
   {
   #if 1
