@@ -70,14 +70,6 @@ void WavPlayer::stop()
 
 void WavPlayer::mainLoop()
 {
-  /*
-  if (counter++ % 100000 == 0)
-  {
-    int32_t playerTimeInSamples = wavDecoder.wavHeader.convertTimeInSamples(playerTime);
-    printf("play: %i, playerTime: %lli ms, playerTimeInSamples: %li, sampleBuffersTailTimeInSamples: %li\n", 
-           playStatus, playerTime, playerTimeInSamples, sampleBuffersTailTimeInSamples);
-  }
-  */
   if (underflow)
   {
     underflow = false;
