@@ -6,7 +6,7 @@
 #include "mbed.h"
 
 #include "FATFileSystem.h"
-#include "os\SDBlockDevice.h"
+#include "SDBlockDevice.h"
 #include "CoreTicker.h"
 #include "CoreModule.h"
 

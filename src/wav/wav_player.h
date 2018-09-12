@@ -2,7 +2,7 @@
 #define _WAV_PLAYER_H_
 
 #include "mbed.h"
-#include "../config.h"
+#include "../os/types.h"
 #include "wav_decoder.h"
 #include "FastPWM.h"
 

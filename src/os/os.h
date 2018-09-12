@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "../config.h"
+#include "types.h"
 
 class Os {
 public:  

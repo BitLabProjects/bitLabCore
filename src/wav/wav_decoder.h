@@ -2,7 +2,7 @@
 #define _WAV_DECODER_H_
 
 #include "mbed.h"
-#include "../config.h"
+#include "../os/types.h"
 
 struct WavHeader
 {
