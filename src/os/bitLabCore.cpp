@@ -3,8 +3,10 @@
 #include "platform/mbed_stats.h"
 
 bitLabCore::bitLabCore() : pc(USBTX, USBRX),
+                           #ifdef UseSDCard
                            sdbd(PC_12, PC_11, PC_10, PD_2, 1*1000*1000, 42*1000*1000),
                            fs("sd"),
+                           #endif
                            coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
                            modules()
 {
@@ -17,7 +19,7 @@ void bitLabCore::addModule(CoreModule *module)
 
 void bitLabCore::run()
 {
-  for (int i = 0; i < modules.size(); i++)
+  for (size_t i = 0; i < modules.size(); i++)
   {
     modules[i]->init();
   }
@@ -65,17 +67,19 @@ void bitLabCore::init()
   pc.printf("Starting core ticker\n");
   coreTicker.start();
 
+  #ifdef UseSDCard
   pc.printf("Mounting SD........");
   int sdErrCode = fs.mount(&sdbd);
   if (sdErrCode == 0)
     pc.printf("[OK]\n");
   else
     pc.printf("[ERR]\n");
+  #endif
 }
 
 void bitLabCore::tick(millisec64 timeDelta)
 {
-  for (int i = 0; i < modules.size(); i++)
+  for (size_t i = 0; i < modules.size(); i++)
   {
     modules[i]->tick(timeDelta);
   }
