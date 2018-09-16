@@ -2,13 +2,16 @@
 
 #include "platform/mbed_stats.h"
 
-bitLabCore::bitLabCore() : pc(USBTX, USBRX),
-                           #ifdef UseSDCard
-                           sdbd(PC_12, PC_11, PC_10, PD_2, 1*1000*1000, 42*1000*1000),
-                           fs("sd"),
-                           #endif
-                           coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
-                           modules()
+bitLabCore::bitLabCore() : 
+  #ifdef UseSerialForMessages
+  pc(USBTX, USBRX),
+  #endif
+  #ifdef UseSDCard
+  sdbd(PC_12, PC_11, PC_10, PD_2, 1*1000*1000, 42*1000*1000),
+  fs("sd"),
+  #endif
+  coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
+  modules()
 {
 }
 
@@ -57,6 +60,7 @@ void bitLabCore::run()
 
 void bitLabCore::init()
 {
+  #ifdef UseSerialForMessages
   pc.baud(115200);
 
   pc.printf("===== bitLabCore =====\n");
@@ -65,6 +69,8 @@ void bitLabCore::init()
   pc.printf("Used heap: %i bytes\n", getUsedHeap());
   
   pc.printf("Starting core ticker\n");
+  #endif
+
   coreTicker.start();
 
   #ifdef UseSDCard

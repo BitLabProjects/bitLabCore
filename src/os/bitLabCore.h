@@ -21,7 +21,9 @@ public:
   void run();
 
 private:
+  #ifdef UseSerialForMessages
   Serial pc;
+  #endif
   
   #ifdef UseSDCard
   SDBlockDevice sdbd;
