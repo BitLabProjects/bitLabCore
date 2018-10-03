@@ -23,8 +23,12 @@ public:
     debug("Assert failed: %s\n", msg);
   }
 
-  static void setCurrTime(millisec64 value);
-  static millisec64 currTime();
+public:  
+  inline static void setCurrTime(millisec64 value) { curr_time = value; }
+  inline static millisec64 currTime() { return curr_time; }
+
+private:  
+  static millisec64 curr_time;
 };
 
 #endif

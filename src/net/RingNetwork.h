@@ -4,6 +4,14 @@
 #include "mbed.h"
 #include "..\os\CoreModule.h"
 
+class RingNetworkProtocol {
+public:
+  static const uint32_t packet_maxsize = 265;
+  static const uint8_t ttl_max = 10;
+  static const uint32_t device_name_maxsize = 16;
+  static const uint8_t protocol_msgid_addressclaim = 1;
+};
+
 struct __packed RingPacketHeader {
   uint8_t data_size;
   uint8_t control;
@@ -20,12 +28,27 @@ struct __packed RingPacket {
   RingPacketHeader header;
   uint8_t data[256];
   RingPacketFooter footer;
+
+  inline bool isProtocolPacket() {
+    return (header.control & 1) == 0;
+  }
+  inline bool isFreePacket() {
+    return isProtocolPacket() && header.data_size == 0;
+  }
+
+  void setFreePacket() {
+    header.control = 0;
+    header.data_size = 0;
+    header.src_address = 0;
+    header.dst_address = 0;
+    header.ttl = RingNetworkProtocol::ttl_max;
+  }
 };
 
 class RingNetwork : public CoreModule
 {
 public:
-  RingNetwork(PinName TxPin, PinName RxPin);
+  RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId);
 
   // --- CoreModule ---
   void init();
@@ -39,10 +62,32 @@ public:
 
   void sendPacket(const RingPacket* packet);
 
+  inline bool isAddressAssigned() { return mac_state == Idle; }
+
 private:
   Serial serial;
-  static const uint32_t packet_maxsize = 265;
-  static const uint8_t ttl_max = 10;
+
+  enum MacState
+  {
+    AddressNotAssigned,
+    AddressClaiming,
+    Idle
+  };
+  uint32_t hardware_id;
+  MacState mac_state;
+  uint8_t mac_address;
+  char mac_device_name[RingNetworkProtocol::device_name_maxsize];
+
+  enum MacWatcherState
+  {
+    Start,
+    WaitingSilence,
+    WaitingAfterSilence
+  };
+  MacWatcherState mac_watcher_state;
+  volatile millisec64 mac_watcher_timeout;
+
+  void mainLoop_UpdateWatcher(bool packetReceived);
 
   //data for tx
   enum TxState
@@ -54,9 +99,10 @@ private:
     SendEndByte
   };
   volatile TxState tx_state;
-  uint8_t tx_packet[packet_maxsize];
+  uint8_t tx_packet[RingNetworkProtocol::packet_maxsize];
   volatile uint32_t tx_packet_size;
   volatile uint32_t tx_packet_idx;
+  inline bool txIsIdle() { return tx_state == TxState::TxIdle; }
 
   //data for rx
   enum RxState

@@ -2,16 +2,16 @@
 
 #include "platform/mbed_stats.h"
 
-bitLabCore::bitLabCore() : 
-  #ifdef UseSerialForMessages
-  pc(USBTX, USBRX),
-  #endif
-  #ifdef UseSDCard
-  sdbd(PC_12, PC_11, PC_10, PD_2, 1*1000*1000, 42*1000*1000),
-  fs("sd"),
-  #endif
-  coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
-  modules()
+bitLabCore::bitLabCore() :
+#ifdef UseSerialForMessages
+                           pc(USBTX, USBRX),
+#endif
+#ifdef UseSDCard
+                           sdbd(PC_12, PC_11, PC_10, PD_2, 1 * 1000 * 1000, 42 * 1000 * 1000),
+                           fs("sd"),
+#endif
+                           coreTicker(10 * 1000, callback(this, &bitLabCore::tick)),
+                           modules()
 {
 }
 
@@ -60,27 +60,30 @@ void bitLabCore::run()
 
 void bitLabCore::init()
 {
-  #ifdef UseSerialForMessages
+  //For STM32-only
+  hardware_id = *((uint32_t*)UID_BASE);
+
+#ifdef UseSerialForMessages
   pc.baud(115200);
 
   pc.printf("===== bitLabCore =====\n");
   pc.printf("    version:  0.1a    \n");
   pc.printf("======================\n");
   pc.printf("Used heap: %i bytes\n", getUsedHeap());
-  
+
   pc.printf("Starting core ticker\n");
-  #endif
+#endif
 
   coreTicker.start();
 
-  #ifdef UseSDCard
+#ifdef UseSDCard
   pc.printf("Mounting SD........");
   int sdErrCode = fs.mount(&sdbd);
   if (sdErrCode == 0)
     pc.printf("[OK]\n");
   else
     pc.printf("[ERR]\n");
-  #endif
+#endif
 }
 
 void bitLabCore::tick(millisec64 timeDelta)

@@ -20,6 +20,8 @@ public:
   void addModule(CoreModule* module);
   void run();
 
+  inline uint32_t getHardwareId() { return hardware_id; };
+
 private:
   #ifdef UseSerialForMessages
   Serial pc;
@@ -29,6 +31,8 @@ private:
   SDBlockDevice sdbd;
   FATFileSystem fs;
   #endif
+
+  uint32_t hardware_id;
 
   CoreTicker coreTicker;
   void tick(millisec64 timeDelta);
