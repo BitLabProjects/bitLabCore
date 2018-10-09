@@ -1,7 +1,7 @@
 #include "RingNetwork.h"
 #include "..\os\os.h"
 
-RingNetwork::RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId) : serial(TxPin, RxPin),
+RingNetwork::RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId) : serial(TxPin, RxPin), 
                                                                               hardware_id(hardwareId),
                                                                               mac_state(MacState::AddressNotAssigned),
                                                                               mac_address(0),
@@ -22,7 +22,8 @@ void RingNetwork::init()
 {
   serial.baud(115200);
   serial.attach(callback(this, &RingNetwork::rxIrq), Serial::RxIrq);
-  serial.attach(callback(this, &RingNetwork::txIrq), Serial::TxIrq);
+  //Do not attach TxIrq here: it will be done when needed and the txIrq method detaches itself when there's nothing to transmit
+  //serial.attach(callback(this, &RingNetwork::txIrq), Serial::TxIrq);
 }
 
 enum PTxAction
@@ -34,18 +35,24 @@ enum PTxAction
 
 void RingNetwork::mainLoop()
 {
-  mainLoop_UpdateWatcher(packetReceived());
+  bool packetReceived = this->packetReceived();
+  //Always update watcher: it has the timeot to detect too much silence
+  mainLoop_UpdateWatcher(packetReceived);
 
-  RingPacket *p = NULL;
+  if (packetReceived)
+  {
+    mainLoop_UpdateMac(getPacket());
+    receiveNextPacket();
+  }
+}
+
+void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
+{
   PTxAction pTxAction = PTxAction::SendFreePacket;
 
   switch (mac_state)
   {
   case MacState::AddressNotAssigned:
-    if (packetReceived())
-    {
-      p = getPacket();
-
       if (p->isFreePacket())
       {
         mac_address = hardware_id & 255;
@@ -82,15 +89,9 @@ void RingNetwork::mainLoop()
         //printf("[%5i] %i) Pass\r\n", Os::currTime(), hardware_id);
         pTxAction = PTxAction::PassAlongDecreasingTTL;
       }
-      receiveNextPacket();
-    }
     break;
 
   case MacState::AddressClaiming:
-    if (packetReceived())
-    {
-      p = getPacket();
-
       if (p->isProtocolPacket())
       {
         auto protocol_msgid = p->data[0];
@@ -162,24 +163,14 @@ void RingNetwork::mainLoop()
         }
       }
 
-      receiveNextPacket();
-    }
     break;
 
   default:
-    if (packetReceived())
-    {
-      p = getPacket();
-
       //printf("[%5i] %i) Pass\r\n", Os::currTime(), hardware_id);
       pTxAction = PTxAction::PassAlongDecreasingTTL;
-      receiveNextPacket();
-    }
     break;
   }
 
-  if (p != NULL)
-  {
     switch (pTxAction)
     {
     case PTxAction::PassAlongDecreasingTTL:
@@ -195,12 +186,12 @@ void RingNetwork::mainLoop()
     }
     sendPacket(p);
   }
-}
 
 void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
 {
   //Every time a packet is received, the watcher is resetted
-  if (packetReceived) {
+  if (packetReceived)
+  {
     mac_watcher_state = MacWatcherState::Start;
   }
 
@@ -213,7 +204,8 @@ void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
     break;
 
   case MacWatcherState::WaitingSilence:
-    if (mac_watcher_timeout == 0) {
+    if (mac_watcher_timeout == 0)
+    {
       mac_watcher_timeout = hardware_id % 500;
       mac_watcher_state = MacWatcherState::WaitingAfterSilence;
       //printf("[%5i] %i) 500 ms of silence detected, waiting %i ms\r\n", Os::currTime(), hardware_id, mac_watcher_timeout);
@@ -221,7 +213,8 @@ void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
     break;
 
   case MacWatcherState::WaitingAfterSilence:
-    if (mac_watcher_timeout == 0) {
+    if (mac_watcher_timeout == 0)
+    {
       RingPacket p;
       p.setFreePacket();
       sendPacket(&p);
@@ -264,7 +257,7 @@ void RingNetwork::sendPacket(const RingPacket *packet)
 
   if (serial.writeable())
   {
-    txIrq();
+    serial.attach(callback(this, &RingNetwork::txIrq), Serial::TxIrq);
   }
 }
 
@@ -288,7 +281,10 @@ inline bool byteNeedsEscaping(uint8_t value)
 void RingNetwork::txIrq()
 {
   if (tx_state == TxState::TxIdle)
+  {
+    serial.abort_write();
     return;
+  }
 
   while (serial.writeable())
   {

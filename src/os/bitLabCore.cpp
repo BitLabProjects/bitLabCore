@@ -77,12 +77,16 @@ void bitLabCore::init()
   coreTicker.start();
 
 #ifdef UseSDCard
+#ifdef UseSerialForMessages
   pc.printf("Mounting SD........");
+#endif
   int sdErrCode = fs.mount(&sdbd);
+#ifdef UseSerialForMessages
   if (sdErrCode == 0)
     pc.printf("[OK]\n");
   else
     pc.printf("[ERR]\n");
+#endif
 #endif
 }
 

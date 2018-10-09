@@ -88,6 +88,7 @@ private:
   volatile millisec64 mac_watcher_timeout;
 
   void mainLoop_UpdateWatcher(bool packetReceived);
+  void mainLoop_UpdateMac(RingPacket *p);
 
   //data for tx
   enum TxState
