@@ -1,7 +1,7 @@
 #include "RingNetwork.h"
 #include "..\os\os.h"
 
-RingNetwork::RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId) : serial(TxPin, RxPin), 
+RingNetwork::RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId) : serial(TxPin, RxPin),
                                                                               hardware_id(hardwareId),
                                                                               mac_state(MacState::AddressNotAssigned),
                                                                               mac_address(0),
@@ -48,144 +48,138 @@ void RingNetwork::mainLoop()
 
 void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
 {
+  auto protocol_msgid = p->data[0];
+
   PTxAction pTxAction = PTxAction::SendFreePacket;
 
   switch (mac_state)
   {
   case MacState::AddressNotAssigned:
-      if (p->isFreePacket())
+    if (p->isFreePacket())
+    {
+      mac_address = hardware_id & 255;
+      mac_device_name[0] = 'D';
+      mac_device_name[1] = 'e';
+      mac_device_name[2] = 'v';
+      mac_device_name[3] = 'i';
+      mac_device_name[4] = 'c';
+      mac_device_name[5] = 'e';
+      mac_device_name[6] = '-';
+      mac_device_name[7] = '0' + (mac_address / 100) % 10;
+      mac_device_name[8] = '0' + (mac_address / 10) % 10;
+      mac_device_name[9] = '0' + (mac_address / 1) % 10;
+      for (uint32_t i = 10; i < RingNetworkProtocol::device_name_maxsize; i++)
       {
-        mac_address = hardware_id & 255;
-        mac_device_name[0] = 'D';
-        mac_device_name[1] = 'e';
-        mac_device_name[2] = 'v';
-        mac_device_name[3] = 'i';
-        mac_device_name[4] = 'c';
-        mac_device_name[5] = 'e';
-        mac_device_name[6] = '-';
-        mac_device_name[7] = '0' + (mac_address / 100) % 10;
-        mac_device_name[8] = '0' + (mac_address / 10) % 10;
-        mac_device_name[9] = '0' + (mac_address / 1) % 10;
-        for (int i = 10; i < RingNetworkProtocol::device_name_maxsize; i++)
-        {
-          mac_device_name[i] = 0;
-        }
-        p->header.control = 0;
-        p->header.data_size = 1 + RingNetworkProtocol::device_name_maxsize;
-        p->header.dst_address = mac_address;
-        p->header.src_address = mac_address;
-        p->header.ttl = RingNetworkProtocol::ttl_max;
-        p->data[0] = RingNetworkProtocol::protocol_msgid_addressclaim;
-        for (int i = 0; i < RingNetworkProtocol::device_name_maxsize; i++)
-        {
-          p->data[1 + i] = mac_device_name[i];
-        }
-        //printf("[%5i] %i) Sent address claim packet\r\n", Os::currTime(), hardware_id);
-        pTxAction = PTxAction::Send;
-        mac_state = MacState::AddressClaiming;
+        mac_device_name[i] = '\0';
       }
-      else
+      p->header.control = 0;
+      p->header.data_size = 1 + RingNetworkProtocol::device_name_maxsize;
+      p->header.dst_address = mac_address;
+      p->header.src_address = mac_address;
+      p->header.ttl = RingNetworkProtocol::ttl_max;
+      p->data[0] = RingNetworkProtocol::protocol_msgid_addressclaim;
+      for (uint32_t i = 0; i < RingNetworkProtocol::device_name_maxsize; i++)
       {
-        //printf("[%5i] %i) Pass\r\n", Os::currTime(), hardware_id);
-        pTxAction = PTxAction::PassAlongDecreasingTTL;
+        p->data[1 + i] = (uint8_t)mac_device_name[i];
       }
+      //printf("[%5i] %i) Sent address claim packet\r\n", Os::currTime(), hardware_id);
+      pTxAction = PTxAction::Send;
+      mac_state = MacState::AddressClaiming;
+    }
+    else
+    {
+      //printf("[%5i] %i) Pass\r\n", Os::currTime(), hardware_id);
+      pTxAction = PTxAction::PassAlongDecreasingTTL;
+    }
     break;
 
   case MacState::AddressClaiming:
-      if (p->isProtocolPacket())
+    if (p->isProtocolPacket())
+    {
+      switch (protocol_msgid)
       {
-        auto protocol_msgid = p->data[0];
-        switch (protocol_msgid)
+      case RingNetworkProtocol::protocol_msgid_addressclaim:
+        //printf("[%5i] %i) Address claim received, addr:%i, name:%16s\r\n", Os::currTime(), hardware_id, p->header.dst_address, (char *)(&p->data[1]));
+        //We are claiming an address and received an addressclaim packet, there are three cases
+        if (p->header.dst_address == mac_address)
         {
-        case RingNetworkProtocol::protocol_msgid_addressclaim:
-          //printf("[%5i] %i) Address claim received, addr:%i, name:%16s\r\n", Os::currTime(), hardware_id, p->header.dst_address, (char *)(&p->data[1]));
-          //We are claiming an address and received an addressclaim packet, there are three cases
-          if (p->header.dst_address == mac_address)
+          auto name_cmp_result = strncmp(mac_device_name, (char *)(&p->data[1]), RingNetworkProtocol::device_name_maxsize);
+          if (name_cmp_result == 0)
           {
-            auto name_cmp_result = strncmp(mac_device_name, (char *)(&p->data[1]), RingNetworkProtocol::device_name_maxsize);
-            if (name_cmp_result == 0)
+            //case 1: It's our packet that round-tripped the ring, the address is claimed
+            //printf("[%5i] %i) Address claimed\r\n", Os::currTime(), hardware_id);
+            pTxAction = PTxAction::SendFreePacket;
+            mac_state = MacState::Idle;
+          }
+          else
+          {
+            //case 2: It's another device claiming the same address, the one with the 'lower' name wins
+            if (name_cmp_result < 0)
             {
-              //printf("[%5i] %i) Address claimed\r\n", Os::currTime(), hardware_id);
-              //It's our packet that round-tripped the ring, the address is claimed
+              //printf("[%5i] %i) Discarded conflicting claim\r\n", Os::currTime(), hardware_id);
+              //We have a lower name, discard the other device packet name and keep waiting
               pTxAction = PTxAction::SendFreePacket;
-              mac_state = MacState::Idle;
             }
             else
             {
-              //It's another device claiming the same address, the one with the 'lower' name wins
-              if (name_cmp_result < 0)
-              {
-                //printf("[%5i] %i) Discarded conflicting claim\r\n", Os::currTime(), hardware_id);
-                //We have a lower name, discard the other device packet name and keep waiting
-                pTxAction = PTxAction::SendFreePacket;
-              }
-              else
-              {
-                //printf("[%5i] %i) Conflicting claim, going back to initial state\r\n", Os::currTime(), hardware_id);
-                //The other device has a lower name, go back to initial state
-                pTxAction = PTxAction::PassAlongDecreasingTTL;
-                mac_state = MacState::AddressNotAssigned;
-              }
+              //printf("[%5i] %i) Conflicting claim, going back to initial state\r\n", Os::currTime(), hardware_id);
+              //The other device has a lower name, go back to initial state
+              pTxAction = PTxAction::PassAlongDecreasingTTL;
+              mac_state = MacState::AddressNotAssigned;
             }
           }
-          else
-          {
-            //printf("[%5i] %i) Address claim of another device\r\n", Os::currTime(), hardware_id);
-            //3. It's another device claiming another address, pass the message along
-            pTxAction = PTxAction::PassAlongDecreasingTTL;
-          }
-          break;
-
-        default:
-          //Unknown protocol msgid, TODO signal
-          if (p->header.dst_address == mac_address)
-          {
-            pTxAction = PTxAction::SendFreePacket;
-          }
-          else
-          {
-            pTxAction = PTxAction::PassAlongDecreasingTTL;
-          }
-          break;
-        }
-      }
-      else
-      {
-        //It's a data packet, we don't have an address yet so we can only pass along if it's not for us
-        //Note that if the address we are trying to claim is of someone else, we are disturbing his traffic here
-        if (p->header.dst_address == mac_address)
-        {
-          pTxAction = PTxAction::SendFreePacket;
         }
         else
         {
+          //case 3: It's another device claiming another address, pass the message along
+          //printf("[%5i] %i) Address claim of another device\r\n", Os::currTime(), hardware_id);
           pTxAction = PTxAction::PassAlongDecreasingTTL;
         }
+        break;
+
+      default:
+        //Unknown protocol msgid, TODO signal
+        //Pass along, even if the dst address is the one we're trying to claim.
+        pTxAction = PTxAction::PassAlongDecreasingTTL;
+        break;
       }
+    }
+    else
+    {
+      //It's a data packet, we don't have an address yet so we can only pass along
+      //Note that if the address we are trying to claim is of someone else, we don't want to disturb his traffic here
+      pTxAction = PTxAction::PassAlongDecreasingTTL;
+    }
 
     break;
 
   default:
-      //printf("[%5i] %i) Pass\r\n", Os::currTime(), hardware_id);
-      pTxAction = PTxAction::PassAlongDecreasingTTL;
+    //printf("[%5i] %i) Pass\r\n", Os::currTime(), hardware_id);
+    pTxAction = PTxAction::PassAlongDecreasingTTL;
     break;
   }
 
-    switch (pTxAction)
-    {
-    case PTxAction::PassAlongDecreasingTTL:
-      p->header.ttl -= 1;
-      break;
-
-    case PTxAction::SendFreePacket:
+  switch (pTxAction)
+  {
+  case PTxAction::PassAlongDecreasingTTL:
+    p->header.ttl -= 1;
+    //If the ttl reaches zero, transform the packet to a free packet:
+    //This is the place where we prevent infinite packet looping
+    //Es: a packet destinated to a non-existing dst_address
+    if (p->header.ttl == 0) {
       p->setFreePacket();
-      break;
-
-    case PTxAction::Send:
-      break;
     }
-    sendPacket(p);
+    break;
+
+  case PTxAction::SendFreePacket:
+    p->setFreePacket();
+    break;
+
+  case PTxAction::Send:
+    break;
   }
+  sendPacket(p);
+}
 
 void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
 {
