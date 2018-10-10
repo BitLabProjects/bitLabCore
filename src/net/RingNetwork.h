@@ -9,7 +9,10 @@ public:
   static const uint32_t packet_maxsize = 265;
   static const uint8_t ttl_max = 10;
   static const uint32_t device_name_maxsize = 16;
+  static const uint8_t protocol_msgid_free = 0;
   static const uint8_t protocol_msgid_addressclaim = 1;
+  static const uint8_t protocol_msgid_whoareyou = 2;
+  static const uint8_t protocol_msgid_hello = 3;
 };
 
 struct __packed RingPacketHeader {
@@ -35,6 +38,9 @@ struct __packed RingPacket {
   inline bool isFreePacket() {
     return isProtocolPacket() && header.data_size == 0;
   }
+  inline bool isForDstAddress(uint8_t dst_address) {
+    return header.dst_address == dst_address;
+  }
 
   void setFreePacket() {
     header.control = 0;
@@ -43,6 +49,22 @@ struct __packed RingPacket {
     header.dst_address = 0;
     header.ttl = RingNetworkProtocol::ttl_max;
   }
+
+  void setHelloUsingSrcAsDst(uint8_t newSrcAddress) {
+    header.control = 0;
+    header.data_size = 1;
+    header.dst_address = header.src_address;
+    header.src_address = newSrcAddress;
+    header.ttl = RingNetworkProtocol::ttl_max;
+    data[0] = RingNetworkProtocol::protocol_msgid_hello;
+  }
+};
+
+enum PTxAction
+{
+  PassAlongDecreasingTTL,
+  SendFreePacket,
+  Send
 };
 
 class RingNetwork : public CoreModule
@@ -51,10 +73,14 @@ public:
   RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId);
 
   // --- CoreModule ---
-  void init();
+  const char* getName() { return "RingNetwork"; }
+  void init(const bitLabCore*);
   void mainLoop();
   void tick(millisec64 timeDelta);
   // ------------------
+
+  void attachDataPacketReceived(Callback<void(RingPacket*, PTxAction*)> dataPacketReceived) { this->dataPacketReceived = dataPacketReceived; }
+  void attachFreePacketReceived(Callback<void(RingPacket*, PTxAction*)> freePacketReceived) { this->freePacketReceived = freePacketReceived; }
 
   bool packetReceived() { return rx_packet_ready; }
   RingPacket* getPacket() { return &rx_packet; }
@@ -63,9 +89,12 @@ public:
   void sendPacket(const RingPacket* packet);
 
   inline bool isAddressAssigned() { return mac_state == Idle; }
+  inline uint8_t getAddress() { return mac_address; }
 
 private:
   Serial serial;
+  Callback<void(RingPacket*, PTxAction*)> dataPacketReceived;
+  Callback<void(RingPacket*, PTxAction*)> freePacketReceived;
 
   enum MacState
   {

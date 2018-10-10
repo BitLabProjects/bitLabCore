@@ -22,6 +22,8 @@ public:
 
   inline uint32_t getHardwareId() { return hardware_id; };
 
+  const CoreModule* findModule(const char* name) const;
+
 private:
   #ifdef UseSerialForMessages
   Serial pc;

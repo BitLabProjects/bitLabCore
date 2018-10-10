@@ -18,20 +18,13 @@ RingNetwork::RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId) : se
 {
 }
 
-void RingNetwork::init()
+void RingNetwork::init(const bitLabCore *core)
 {
   serial.baud(115200);
   serial.attach(callback(this, &RingNetwork::rxIrq), Serial::RxIrq);
   //Do not attach TxIrq here: it will be done when needed and the txIrq method detaches itself when there's nothing to transmit
   //serial.attach(callback(this, &RingNetwork::txIrq), Serial::TxIrq);
 }
-
-enum PTxAction
-{
-  PassAlongDecreasingTTL,
-  SendFreePacket,
-  Send
-};
 
 void RingNetwork::mainLoop()
 {
@@ -48,7 +41,7 @@ void RingNetwork::mainLoop()
 
 void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
 {
-  auto protocol_msgid = p->data[0];
+  auto protocol_msgid = p->header.data_size > 0 ? p->data[0] : RingNetworkProtocol::protocol_msgid_free;
 
   PTxAction pTxAction = PTxAction::SendFreePacket;
 
@@ -101,7 +94,7 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
       case RingNetworkProtocol::protocol_msgid_addressclaim:
         //printf("[%5i] %i) Address claim received, addr:%i, name:%16s\r\n", Os::currTime(), hardware_id, p->header.dst_address, (char *)(&p->data[1]));
         //We are claiming an address and received an addressclaim packet, there are three cases
-        if (p->header.dst_address == mac_address)
+        if (p->isForDstAddress(mac_address))
         {
           auto name_cmp_result = strncmp(mac_device_name, (char *)(&p->data[1]), RingNetworkProtocol::device_name_maxsize);
           if (name_cmp_result == 0)
@@ -150,7 +143,75 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
       //Note that if the address we are trying to claim is of someone else, we don't want to disturb his traffic here
       pTxAction = PTxAction::PassAlongDecreasingTTL;
     }
+    break;
 
+  case MacState::Idle:
+    if (p->isForDstAddress(mac_address))
+    {
+      if (p->isProtocolPacket())
+      {
+        switch (protocol_msgid)
+        {
+        case RingNetworkProtocol::protocol_msgid_addressclaim:
+          //We are not claiming an address and received an addressclaim packet: refuse the claimer
+          //since we are the one owning the address being claimed
+          pTxAction = PTxAction::SendFreePacket;
+          break;
+
+        case RingNetworkProtocol::protocol_msgid_hello:
+          if (freePacketReceived)
+          {
+            freePacketReceived.call(p, &pTxAction);
+          }
+          break;
+
+        default:
+          //Unknown protocol msgid, TODO signal
+          pTxAction = PTxAction::SendFreePacket;
+          break;
+        }
+      }
+      else
+      {
+        if (dataPacketReceived)
+        {
+          dataPacketReceived.call(p, &pTxAction);
+        }
+      }
+    }
+    else
+    {
+      if (protocol_msgid == RingNetworkProtocol::protocol_msgid_free)
+      {
+        if (freePacketReceived)
+        {
+          freePacketReceived.call(p, &pTxAction);
+        }
+        else
+        {
+          pTxAction = PTxAction::PassAlongDecreasingTTL;
+        }
+      }
+      else if (p->isProtocolPacket() && protocol_msgid == RingNetworkProtocol::protocol_msgid_whoareyou)
+      {
+        if (p->header.ttl <= 1)
+        {
+          //this whoareyou is for us, answer
+          p->setHelloUsingSrcAsDst(mac_address);
+          pTxAction = PTxAction::Send;
+        }
+        else
+        {
+          //this whoareyou is not for us, pass along
+          pTxAction = PTxAction::PassAlongDecreasingTTL;
+        }
+      }
+      else
+      {
+        //Not for us, pass along
+        pTxAction = PTxAction::PassAlongDecreasingTTL;
+      }
+    }
     break;
 
   default:
@@ -166,7 +227,8 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
     //If the ttl reaches zero, transform the packet to a free packet:
     //This is the place where we prevent infinite packet looping
     //Es: a packet destinated to a non-existing dst_address
-    if (p->header.ttl == 0) {
+    if (p->header.ttl == 0)
+    {
       p->setFreePacket();
     }
     break;

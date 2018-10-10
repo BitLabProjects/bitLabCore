@@ -24,7 +24,7 @@ void bitLabCore::run()
 {
   for (size_t i = 0; i < modules.size(); i++)
   {
-    modules[i]->init();
+    modules[i]->init(this);
   }
 
   while (true)
@@ -61,7 +61,7 @@ void bitLabCore::run()
 void bitLabCore::init()
 {
   //For STM32-only
-  hardware_id = *((uint32_t*)UID_BASE);
+  hardware_id = *((uint32_t *)UID_BASE);
 
 #ifdef UseSerialForMessages
   pc.baud(115200);
@@ -96,6 +96,17 @@ void bitLabCore::tick(millisec64 timeDelta)
   {
     modules[i]->tick(timeDelta);
   }
+}
+
+const CoreModule* bitLabCore::findModule(const char *name) const
+{
+  for (size_t i = 0; i < modules.size(); i++)
+  {
+    if (strcmp(modules[i]->getName(), name) == 0) {
+      return modules[i];
+    }
+  }
+  return NULL;
 }
 
 int bitLabCore::getUsedHeap()
