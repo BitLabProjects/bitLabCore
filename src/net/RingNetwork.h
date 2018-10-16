@@ -115,6 +115,7 @@ private:
   };
   MacWatcherState mac_watcher_state;
   volatile millisec64 mac_watcher_timeout;
+  volatile millisec64 mac_delay_timeout;
 
   void mainLoop_UpdateWatcher(bool packetReceived);
   void mainLoop_UpdateMac(RingPacket *p);

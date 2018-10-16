@@ -34,9 +34,11 @@ void RingNetwork::mainLoop()
 
   if (packetReceived)
   {
+    if (mac_delay_timeout == 0) {
     mainLoop_UpdateMac(getPacket());
     receiveNextPacket();
   }
+}
 }
 
 void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
@@ -324,6 +326,12 @@ void RingNetwork::tick(millisec64 timeDelta)
   {
     mac_watcher_timeout = 0;
   }
+
+  mac_delay_timeout -= timeDelta;
+  if (mac_delay_timeout < 0)
+  {
+    mac_delay_timeout = 0;
+}
 }
 
 const uint8_t StartByte = 85;
@@ -413,7 +421,7 @@ void RingNetwork::rxIrq()
         rx_bytes_to_read = 5;
         rx_state = RxState::ReceivePacketHeader;
       }
-      return;
+      break;
 
     case RxState::ReceivePacketHeader:
     case RxState::ReceivePacketData:
@@ -465,6 +473,7 @@ void RingNetwork::rxIrq()
       }
       rx_state = RxState::RxIdle;
       rx_packet_ready = true;
+      mac_delay_timeout = 100;
       break;
     }
 
