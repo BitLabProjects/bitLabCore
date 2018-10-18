@@ -70,7 +70,7 @@ enum PTxAction
 class RingNetwork : public CoreModule
 {
 public:
-  RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId);
+  RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId, bool watchForSilence);
 
   // --- CoreModule ---
   const char* getName() { return "RingNetwork"; }
@@ -113,6 +113,7 @@ private:
     WaitingSilence,
     WaitingAfterSilence
   };
+  bool watchForSilence;
   MacWatcherState mac_watcher_state;
   volatile millisec64 mac_watcher_timeout;
   volatile millisec64 mac_delay_timeout;

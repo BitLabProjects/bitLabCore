@@ -1,20 +1,24 @@
 #include "RingNetwork.h"
 #include "..\os\os.h"
 
-RingNetwork::RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId) : serial(TxPin, RxPin),
-                                                                              hardware_id(hardwareId),
-                                                                              mac_state(MacState::AddressNotAssigned),
-                                                                              mac_address(0),
-                                                                              mac_watcher_state(MacWatcherState::Start),
-                                                                              mac_watcher_timeout(0),
-                                                                              tx_state(TxState::TxIdle),
-                                                                              tx_packet_size(0),
-                                                                              tx_packet_idx(0),
-                                                                              rx_state(RxState::RxIdle),
-                                                                              rx_state_return(RxState::RxIdle),
-                                                                              rx_bytes_to_read(0),
-                                                                              rx_bytes_dst(NULL),
-                                                                              rx_packet_ready(false)
+RingNetwork::RingNetwork(PinName TxPin,
+                         PinName RxPin,
+                         uint32_t hardwareId,
+                         bool watchForSilence) : serial(TxPin, RxPin),
+                                                 hardware_id(hardwareId),
+                                                 mac_state(MacState::AddressNotAssigned),
+                                                 mac_address(0),
+                                                 watchForSilence(watchForSilence),
+                                                 mac_watcher_state(MacWatcherState::Start),
+                                                 mac_watcher_timeout(0),
+                                                 tx_state(TxState::TxIdle),
+                                                 tx_packet_size(0),
+                                                 tx_packet_idx(0),
+                                                 rx_state(RxState::RxIdle),
+                                                 rx_state_return(RxState::RxIdle),
+                                                 rx_bytes_to_read(0),
+                                                 rx_bytes_dst(NULL),
+                                                 rx_packet_ready(false)
 {
 }
 
@@ -30,15 +34,18 @@ void RingNetwork::mainLoop()
 {
   bool packetReceived = this->packetReceived();
   //Always update watcher: it has the timeot to detect too much silence
-  mainLoop_UpdateWatcher(packetReceived);
+  if (watchForSilence) {
+    mainLoop_UpdateWatcher(packetReceived);
+  }
 
   if (packetReceived)
   {
-    if (mac_delay_timeout == 0) {
-    mainLoop_UpdateMac(getPacket());
-    receiveNextPacket();
+    if (mac_delay_timeout == 0)
+    {
+      mainLoop_UpdateMac(getPacket());
+      receiveNextPacket();
+    }
   }
-}
 }
 
 void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
@@ -331,7 +338,7 @@ void RingNetwork::tick(millisec64 timeDelta)
   if (mac_delay_timeout < 0)
   {
     mac_delay_timeout = 0;
-}
+  }
 }
 
 const uint8_t StartByte = 85;
