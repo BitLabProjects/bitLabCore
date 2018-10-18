@@ -79,8 +79,7 @@ public:
   void tick(millisec64 timeDelta);
   // ------------------
 
-  void attachDataPacketReceived(Callback<void(RingPacket*, PTxAction*)> dataPacketReceived) { this->dataPacketReceived = dataPacketReceived; }
-  void attachFreePacketReceived(Callback<void(RingPacket*, PTxAction*)> freePacketReceived) { this->freePacketReceived = freePacketReceived; }
+  void attachOnPacketReceived(Callback<void(RingPacket*, PTxAction*)> onPacketReceived) { this->onPacketReceived = onPacketReceived; }
 
   bool packetReceived() { return rx_packet_ready; }
   RingPacket* getPacket() { return &rx_packet; }
@@ -93,8 +92,7 @@ public:
 
 private:
   Serial serial;
-  Callback<void(RingPacket*, PTxAction*)> dataPacketReceived;
-  Callback<void(RingPacket*, PTxAction*)> freePacketReceived;
+  Callback<void(RingPacket*, PTxAction*)> onPacketReceived;
 
   enum MacState
   {

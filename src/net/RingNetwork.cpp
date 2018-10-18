@@ -168,9 +168,9 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
           break;
 
         case RingNetworkProtocol::protocol_msgid_hello:
-          if (freePacketReceived)
+          if (onPacketReceived)
           {
-            freePacketReceived.call(p, &pTxAction);
+            onPacketReceived.call(p, &pTxAction);
           }
           break;
 
@@ -182,9 +182,9 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
       }
       else
       {
-        if (dataPacketReceived)
+        if (onPacketReceived)
         {
-          dataPacketReceived.call(p, &pTxAction);
+          onPacketReceived.call(p, &pTxAction);
         }
       }
     }
@@ -192,9 +192,9 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
     {
       if (protocol_msgid == RingNetworkProtocol::protocol_msgid_free)
       {
-        if (freePacketReceived)
+        if (onPacketReceived)
         {
-          freePacketReceived.call(p, &pTxAction);
+          onPacketReceived.call(p, &pTxAction);
         }
         else
         {
@@ -480,7 +480,7 @@ void RingNetwork::rxIrq()
       }
       rx_state = RxState::RxIdle;
       rx_packet_ready = true;
-      mac_delay_timeout = 100;
+      //mac_delay_timeout = 100;
       break;
     }
 
