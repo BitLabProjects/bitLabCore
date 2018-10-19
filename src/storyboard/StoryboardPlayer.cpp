@@ -34,16 +34,13 @@ void StoryboardPlayer::stop()
   playStatus = Stopped;
 }
 
-void StoryboardPlayer::mainLoop()
-{
-  if (playStatus == Playing)
-  {
-    fillPlayBuffer();
-  }
-}
-
 void StoryboardPlayer::fillPlayBuffer()
 {
+  if (playStatus != Playing)
+  {
+    return;
+  }
+
   int fillCount = 0;
   int playBufferLast = (playBufferTail + (playBufferCount - 1)) % playBufferCount;
   if (playBufferHead == playBufferLast)
@@ -63,7 +60,7 @@ void StoryboardPlayer::fillPlayBuffer()
       if (lastCycleWasReset)
       {
         //Maybe empty storyboard? stop play
-        Os::debug("play buffer: no entry found for two cycles, stopping\n");
+        //Os::debug("play buffer: no entry found for two cycles, stopping\n");
         stop();
         return;
       }
@@ -87,7 +84,7 @@ void StoryboardPlayer::fillPlayBuffer()
   //Os::debug("play buffer: filled %i entries\n", fillCount);
 }
 
-void StoryboardPlayer::tick(millisec64 timeDelta)
+void StoryboardPlayer::advance(millisec64 timeDelta)
 {
   if (playStatus == Playing)
   {

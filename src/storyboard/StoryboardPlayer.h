@@ -2,7 +2,6 @@
 #define _STORYBOARDPLAYER_H_
 
 #include "Storyboard.h"
-//#include "..\bitLabCore\src\os\CoreModule.h"
 
 struct PlayBufferEntry
 {
@@ -17,15 +16,12 @@ enum PlayStatus
   Playing
 };
 
-class StoryboardPlayer /*: public CoreModule*/ {
+class StoryboardPlayer {
 public:
   StoryboardPlayer(Storyboard* storyboard, Callback<void(int, int, millisec, millisec)> onSetOutput);
 
-  // --- CoreModule ---
-  void init();
-  void mainLoop();
-  void tick(millisec64 timeDelta);
-  // ------------------
+  void fillPlayBuffer();
+  void advance(millisec64 timeDelta);
 
   void play();
   void pause();
@@ -48,7 +44,6 @@ private:
   millisec playBufferMaxTime;
   volatile millisec64 storyboardTime;
 
-  void fillPlayBuffer();
   void executePlayBuffer();
 };
 
