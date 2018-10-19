@@ -2,7 +2,7 @@
 #define _STORYBOARDLOADER_H_
 
 #include "Storyboard.h"
-#include "..\bitLabCore\src\json\Json.h"
+#include "..\json\Json.h"
 
 class StoryboardLoader {
 public:

@@ -12,6 +12,9 @@ public:
       "NOP\n\t"
     );
   }
+  static inline int32_t clamp01(float value) {
+    return max(0, min(value, 1));
+  }
   static inline int32_t min(int32_t a, int32_t b) {
     return a < b ? a : b;
   }

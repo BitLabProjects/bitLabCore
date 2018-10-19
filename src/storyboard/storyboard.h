@@ -1,8 +1,8 @@
 #ifndef _STORYBOARD_H_
 #define _STORYBOARD_H_
 
-#include "timeline.h"
-#include "config.h"
+#include "Timeline.h"
+#include "..\os\types.h"
 
 class Storyboard
 {

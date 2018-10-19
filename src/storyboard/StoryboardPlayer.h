@@ -1,10 +1,8 @@
 #ifndef _STORYBOARDPLAYER_H_
 #define _STORYBOARDPLAYER_H_
 
-#include "storyboard.h"
-#include "..\boards\triac_board.h"
-#include "..\boards\relay_board.h"
-#include "..\bitLabCore\src\os\CoreModule.h"
+#include "Storyboard.h"
+//#include "..\bitLabCore\src\os\CoreModule.h"
 
 struct PlayBufferEntry
 {
@@ -19,9 +17,9 @@ enum PlayStatus
   Playing
 };
 
-class StoryboardPlayer: public CoreModule {
+class StoryboardPlayer /*: public CoreModule*/ {
 public:
-  StoryboardPlayer(RelayBoard *relay_board, TriacBoard *triac_board);
+  StoryboardPlayer(Storyboard* storyboard, Callback<void(int, int, millisec, millisec)> onSetOutput);
 
   // --- CoreModule ---
   void init();
@@ -33,10 +31,11 @@ public:
   void pause();
   void stop();
 
+  millisec64 getStoryboardTime() { return storyboardTime; }
+
 private:
-  Storyboard storyboard;
-  RelayBoard *relay_board;
-  TriacBoard *triac_board;
+  Storyboard* storyboard;
+  Callback<void(int, int, millisec, millisec)> onSetOutput;
 
   //Circular buffer for storyboard playing
   PlayStatus playStatus;
@@ -51,7 +50,6 @@ private:
 
   void fillPlayBuffer();
   void executePlayBuffer();
-  void applyTimelineEntry(uint8_t output, const TimelineEntry* entry);
 };
 
 #endif

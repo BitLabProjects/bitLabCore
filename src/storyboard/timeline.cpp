@@ -1,4 +1,4 @@
-#include "timeline.h"
+#include "Timeline.h"
 
 Timeline::Timeline() : output(1)
 {

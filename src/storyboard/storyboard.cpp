@@ -1,7 +1,7 @@
-#include "storyboard.h"
+#include "Storyboard.h"
 
-#include "..\bitLabCore\src\utils.h"
-#include "..\bitLabCore\src\os\os.h"
+#include "..\utils.h"
+#include "..\os\os.h"
 
 Storyboard::Storyboard()
 {

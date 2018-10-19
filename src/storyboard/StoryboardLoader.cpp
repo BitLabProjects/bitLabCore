@@ -1,7 +1,7 @@
-#include "storyboard_loader.h"
+#include "StoryboardLoader.h"
 
-#include "..\bitLabCore\src\json\Json.h"
-#include "..\bitLabCore\src\os\os.h"
+#include "..\json\Json.h"
+#include "..\os\os.h"
 
 StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonContent) : 
   storyboard(storyboard), json(jsonContent, strlen(jsonContent), callback(this, &StoryboardLoader::accept))
