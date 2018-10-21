@@ -1,13 +1,13 @@
 #ifndef _TIMELINE_H_
 #define _TIMELINE_H_
 
-#include "mbed.h"
+#include "..\os\types.h"
 
 struct TimelineEntry
 {
-  int32_t time;
+  millisec time;
   int32_t value;
-  int32_t duration;
+  millisec duration;
 
   void clear()
   {
@@ -22,23 +22,26 @@ class Timeline
 public:
   Timeline();
 
-  void create(uint8_t output, int32_t newEntriesCapacity);
+  void create(uint8_t output, uint8_t newEntriesCapacity);
   void clear();
   void setOutput(uint8_t output);
   uint8_t getOutput() { return output; }
-  void add(int32_t time, int32_t value, int32_t duration);
+  void add(millisec time, int32_t value, millisec duration);
+  void set(uint8_t entryIdx, millisec time, int32_t value, millisec duration);
   const TimelineEntry *getCurrent();
   void moveFirst();
   void moveNext();
   bool isFinished();
   uint8_t getEntriesCount() { return entriesCount; }
 
+  uint32_t calcCrc32(uint32_t initialCrc);
+
 private:
   uint8_t output;
   TimelineEntry *entries;
-  int32_t entriesCount;
-  int32_t entriesCapacity;
-  int32_t currentIdx;
+  uint8_t entriesCount;
+  uint8_t entriesCapacity;
+  uint8_t currentIdx;
 };
 
 #endif

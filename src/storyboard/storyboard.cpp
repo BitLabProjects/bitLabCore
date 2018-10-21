@@ -10,7 +10,7 @@ Storyboard::Storyboard()
   timelinesCount = 0;
 }
 
-void Storyboard::create(int32_t newTimelinesCapacity, millisec totalDuration)
+void Storyboard::create(uint8_t newTimelinesCapacity, millisec totalDuration)
 {
   if (timelines)
   {
@@ -21,7 +21,7 @@ void Storyboard::create(int32_t newTimelinesCapacity, millisec totalDuration)
   duration = totalDuration;
 }
 
-Timeline *Storyboard::addTimeline(uint8_t output, int32_t newEntriesCapacity)
+Timeline *Storyboard::addTimeline(uint8_t output, uint8_t newEntriesCapacity)
 {
   if (timelinesCount < timelinesCapacity)
   {
@@ -30,7 +30,7 @@ Timeline *Storyboard::addTimeline(uint8_t output, int32_t newEntriesCapacity)
   }
   else
   {
-    Os::debug("Error");
+    //Os::debug("Error");
   }
 
   return &timelines[timelinesCount - 1];
@@ -48,7 +48,7 @@ bool Storyboard::isFinished(millisec currTime)
 
 void Storyboard::reset()
 {
-  for (uint8_t outputIdx = 0; outputIdx < timelinesCapacity; outputIdx++)
+  for (uint8_t outputIdx = 0; outputIdx < timelinesCount; outputIdx++)
   {
     timelines[outputIdx].moveFirst();
   }
@@ -98,7 +98,18 @@ bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t* output, const T
   return true;
 }
 
-int Storyboard::getTimelineIdx(uint8_t output)
+uint8_t Storyboard::getTimelineIdx(uint8_t output)
 {
-  return Utils::max(0, Utils::min(output - 1, timelinesCapacity - 1));
+  return Utils::max(0, Utils::min((uint8_t)(output - 1), (uint8_t)(timelinesCount - 1)));
+}
+
+uint32_t Storyboard::calcCrc32(uint32_t initialCrc) {
+  auto crc32 = initialCrc;
+  crc32 = Utils::crc32(timelinesCount, crc32);
+  crc32 = Utils::crc32(duration, crc32);
+  for (uint8_t i = 0; i < timelinesCount; i++)
+  {
+    crc32 = timelines[i].calcCrc32(crc32);
+  }
+  return crc32;
 }

@@ -1,4 +1,6 @@
 #include "Timeline.h"
+#include "..\utils.h"
+#include "stddef.h"
 
 Timeline::Timeline() : output(1)
 {
@@ -8,7 +10,7 @@ Timeline::Timeline() : output(1)
   currentIdx = 0;
 }
 
-void Timeline::create(uint8_t output, int32_t newEntriesCapacity)
+void Timeline::create(uint8_t output, uint8_t newEntriesCapacity)
 {
   if (entries)
   {
@@ -31,7 +33,7 @@ void Timeline::setOutput(uint8_t output)
   this->output = output;
 }
 
-void Timeline::add(int32_t time, int32_t value, int32_t duration)
+void Timeline::add(millisec time, int32_t value, millisec duration)
 {
   if (entriesCount == entriesCapacity)
   {
@@ -49,10 +51,20 @@ void Timeline::add(int32_t time, int32_t value, int32_t duration)
     }
   }
 
-  entries[entriesCount].time = time;
-  entries[entriesCount].value = value;
-  entries[entriesCount].duration = duration;
   entriesCount += 1;
+  set(entriesCount - 1, time, value, duration);
+}
+
+void Timeline::set(uint8_t entryIdx, millisec time, int32_t value, millisec duration)
+{
+  if (entryIdx >= entriesCount) {
+    // TODO signal
+    return;
+  }
+
+  entries[entryIdx].time = time;
+  entries[entryIdx].value = value;
+  entries[entryIdx].duration = duration;
 }
 
 const TimelineEntry *Timeline::getCurrent()
@@ -74,4 +86,17 @@ void Timeline::moveNext()
 bool Timeline::isFinished()
 {
   return currentIdx == entriesCount;
+}
+
+uint32_t Timeline::calcCrc32(uint32_t initialCrc) {
+  auto crc32 = initialCrc;
+  crc32 = Utils::crc32(output, crc32);
+  crc32 = Utils::crc32(entriesCount, crc32);
+  for (uint8_t i = 0; i < entriesCount; i++)
+  {
+    crc32 = Utils::crc32(entries[i].time, crc32);
+    crc32 = Utils::crc32(entries[i].value, crc32);
+    crc32 = Utils::crc32(entries[i].duration, crc32);
+  }
+  return crc32;
 }

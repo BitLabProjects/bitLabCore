@@ -2,6 +2,7 @@
 #define _STORYBOARDPLAYER_H_
 
 #include "Storyboard.h"
+#include "mbed.h"
 
 struct PlayBufferEntry
 {
