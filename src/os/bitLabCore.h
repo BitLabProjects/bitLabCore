@@ -37,7 +37,7 @@ private:
   uint32_t hardware_id;
 
   CoreTicker coreTicker;
-  void tick(millisec64 timeDelta);
+  void tick(millisec timeDelta);
 
   vector<CoreModule*> modules;
 

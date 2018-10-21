@@ -1,7 +1,7 @@
 #include "CoreTicker.h"
 
 CoreTicker::CoreTicker(int ticksPerSecond,
-                       mbed::Callback<void(millisec64 timeDelta)> onTickCallback)
+                       mbed::Callback<void(millisec timeDelta)> onTickCallback)
 {
   this->ticksPerSecond = ticksPerSecond;
   this->onTickCallback = onTickCallback;

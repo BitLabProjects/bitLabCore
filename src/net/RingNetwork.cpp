@@ -326,7 +326,7 @@ void RingNetwork::sendPacket(const RingPacket *packet)
   }
 }
 
-void RingNetwork::tick(millisec64 timeDelta)
+void RingNetwork::tick(millisec timeDelta)
 {
   mac_watcher_timeout -= timeDelta;
   if (mac_watcher_timeout < 0)

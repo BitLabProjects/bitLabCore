@@ -14,7 +14,7 @@ public:
   bool play();
   void stop();
   void mainLoop();
-  void tick(millisec64 timeDelta);
+  void tick(millisec timeDelta);
 
 private:
   enum PlayStatus

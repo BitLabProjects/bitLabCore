@@ -78,12 +78,7 @@ void WavPlayer::mainLoop()
 
   if (playStatus == Playing)
   {
-    //millisec64 timeBefore = Os::currTime();
-    if (fillSampleBuffer())
-    {
-      //millisec64 fillTime = Os::currTime() - timeBefore;
-      //printf("fillTime: %lli ms\n", fillTime);
-    }
+    fillSampleBuffer();
   }
 }
 
@@ -116,7 +111,7 @@ bool WavPlayer::fillSampleBuffer()
   return true;
 }
 
-void WavPlayer::tick(millisec64 timeDelta)
+void WavPlayer::tick(millisec timeDelta)
 {
   if (playStatus != Playing)
   {

@@ -76,7 +76,7 @@ public:
   const char* getName() { return "RingNetwork"; }
   void init(const bitLabCore*);
   void mainLoop();
-  void tick(millisec64 timeDelta);
+  void tick(millisec timeDelta);
   // ------------------
 
   void attachOnPacketReceived(Callback<void(RingPacket*, PTxAction*)> onPacketReceived) { this->onPacketReceived = onPacketReceived; }
@@ -113,8 +113,8 @@ private:
   };
   bool watchForSilence;
   MacWatcherState mac_watcher_state;
-  volatile millisec64 mac_watcher_timeout;
-  volatile millisec64 mac_delay_timeout;
+  volatile millisec mac_watcher_timeout;
+  volatile millisec mac_delay_timeout;
 
   void mainLoop_UpdateWatcher(bool packetReceived);
   void mainLoop_UpdateMac(RingPacket *p);

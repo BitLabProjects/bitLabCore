@@ -21,7 +21,7 @@ public:
   StoryboardPlayer(Storyboard* storyboard, Callback<void(int, int, millisec, millisec)> onSetOutput);
 
   void fillPlayBuffer();
-  void advance(millisec64 timeDelta);
+  void advance(millisec timeDelta);
 
   void play();
   void pause();

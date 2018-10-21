@@ -6,7 +6,7 @@
 
 class CoreTicker {
 public:
-  CoreTicker(int ticksPerSecond, mbed::Callback<void(millisec64 timeDelta)> onTickCallback);
+  CoreTicker(int ticksPerSecond, mbed::Callback<void(millisec timeDelta)> onTickCallback);
 
   void start();
 
@@ -17,7 +17,7 @@ private:
   volatile millisec64 tick_count;
   volatile millisec64 currTime; //Time in milliseconds
 
-  mbed::Callback<void(millisec64 timeDelta)> onTickCallback;
+  mbed::Callback<void(millisec timeDelta)> onTickCallback;
 
   void tick();
 };

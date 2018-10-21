@@ -13,7 +13,7 @@ public:
   virtual const char* getName() = 0;
   virtual void init(const bitLabCore*) = 0;
   virtual void mainLoop() = 0;
-  virtual void tick(millisec64 timeDelta) = 0;
+  virtual void tick(millisec timeDelta) = 0;
 };
 
 #endif

@@ -90,7 +90,7 @@ void bitLabCore::init()
 #endif
 }
 
-void bitLabCore::tick(millisec64 timeDelta)
+void bitLabCore::tick(millisec timeDelta)
 {
   for (size_t i = 0; i < modules.size(); i++)
   {

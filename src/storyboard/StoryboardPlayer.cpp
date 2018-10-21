@@ -84,7 +84,7 @@ void StoryboardPlayer::fillPlayBuffer()
   //Os::debug("play buffer: filled %i entries\n", fillCount);
 }
 
-void StoryboardPlayer::advance(millisec64 timeDelta)
+void StoryboardPlayer::advance(millisec timeDelta)
 {
   if (playStatus == Playing)
   {
