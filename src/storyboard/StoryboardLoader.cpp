@@ -12,8 +12,9 @@ StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonConte
 
 bool StoryboardLoader::load()
 {
-  int totalDurationTODO = 0;
-  storyboard->create(8 + 32, totalDurationTODO);
+  temp_storyboardDuration = 0;
+  //int totalDurationTODO = 0;
+  //storyboard->create(8 + 32, totalDurationTODO);
   state = SLS_Begin;
   tempTimeline.create(1, 1, 100);
   //Os::debug("Parsing...\n");
@@ -108,11 +109,19 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
   Os::debug("%s of \"%s\"\n", acceptTypeDescr, key);
   */
 
+  int32_t intValue;
   switch (state)
   {
   case SLS_Begin:
+    if (tryMatchInt32(acceptArg, "duration", intValue))
+    {
+      temp_storyboardDuration = intValue;
+      return true;
+    }
+
     if (acceptType == Json_Accept_ArrayBegin && streq(key, "timelines"))
     {
+      storyboard->create(32, temp_storyboardDuration);
       //Os::debug("timelines [\n");
       state = SLS_TimelinesArray;
       return true;
@@ -140,7 +149,6 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
   case SLS_Timeline:
     // TODO name
     // TODO outputType
-    int32_t intValue;
     if (tryMatchInt32(acceptArg, "outputId", intValue))
     {
       //Os::debug("    outputId=%i\n", outputId);

@@ -20,6 +20,7 @@ RingNetwork::RingNetwork(PinName TxPin,
                                                  rx_bytes_dst(NULL),
                                                  rx_packet_ready(false)
 {
+  mac_delay_timeout = 0;
 }
 
 void RingNetwork::init(const bitLabCore *core)
@@ -280,6 +281,7 @@ void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
   case MacWatcherState::WaitingAfterSilence:
     if (mac_watcher_timeout == 0)
     {
+      silenceDetected = true;
       RingPacket p;
       p.setFreePacket();
       sendPacket(&p);

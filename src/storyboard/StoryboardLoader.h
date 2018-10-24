@@ -28,6 +28,7 @@ private:
   static const int bufferSize = 32;
   char key[bufferSize];
   char value[bufferSize];
+  millisec temp_storyboardDuration;
   Timeline tempTimeline;
   uint32_t temp_outputHardwareId;
   uint8_t temp_outputId;

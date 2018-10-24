@@ -106,6 +106,8 @@ uint8_t Storyboard::getTimelineIdx(uint8_t output)
 
 uint32_t Storyboard::calcCrc32(uint32_t initialCrc) {
   auto crc32 = initialCrc;
+  //Always insert a 123 in the crc to avoid having a zero when no timeline is present
+  crc32 = Utils::crc32((uint8_t)123, crc32);
   crc32 = Utils::crc32(timelinesCount, crc32);
   crc32 = Utils::crc32(duration, crc32);
   for (uint8_t i = 0; i < timelinesCount; i++)

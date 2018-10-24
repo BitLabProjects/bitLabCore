@@ -4,7 +4,8 @@
 #include "mbed.h"
 #include "..\os\CoreModule.h"
 
-class RingNetworkProtocol {
+class RingNetworkProtocol
+{
 public:
   static const uint32_t packet_maxsize = 265;
   static const uint8_t ttl_max = 10;
@@ -15,7 +16,8 @@ public:
   static const uint8_t protocol_msgid_hello = 3;
 };
 
-struct __packed RingPacketHeader {
+struct __packed RingPacketHeader
+{
   uint8_t data_size;
   uint8_t control;
   uint8_t src_address;
@@ -23,36 +25,44 @@ struct __packed RingPacketHeader {
   uint8_t ttl;
 };
 
-struct __packed RingPacketFooter {
+struct __packed RingPacketFooter
+{
   uint32_t hash;
 };
 
-struct __packed RingPacket {
+struct __packed RingPacket
+{
   RingPacketHeader header;
   uint8_t data[256];
   RingPacketFooter footer;
 
-  inline bool isProtocolPacket() {
+  inline bool isProtocolPacket()
+  {
     return (header.control & 1) == 0;
   }
-  inline bool isFreePacket() {
+  inline bool isFreePacket()
+  {
     return isProtocolPacket() && header.data_size == 0;
   }
-  inline bool isForDstAddress(uint8_t dst_address) {
+  inline bool isForDstAddress(uint8_t dst_address)
+  {
     return header.dst_address == dst_address;
   }
-  inline bool isDataPacket(uint8_t dst_address, uint8_t minDataSize, uint8_t msgId) {
-    return (isProtocolPacket() &&
+  inline bool isDataPacket(uint8_t dst_address, uint8_t minDataSize, uint8_t msgId)
+  {
+    return (!isProtocolPacket() &&
             isForDstAddress(dst_address) &&
             header.data_size >= minDataSize &&
             data[0] == msgId);
   }
 
-  inline uint32_t getDataUInt32(uint8_t offset) {
-    return *((uint32_t*)&data[offset]);
+  inline uint32_t getDataUInt32(uint8_t offset)
+  {
+    return *((uint32_t *)&data[offset]);
   }
 
-  void setFreePacket() {
+  void setFreePacket()
+  {
     header.control = 0;
     header.data_size = 0;
     header.src_address = 0;
@@ -60,14 +70,15 @@ struct __packed RingPacket {
     header.ttl = RingNetworkProtocol::ttl_max;
   }
 
-  void setHelloUsingSrcAsDst(uint8_t newSrcAddress, uint32_t hardwareId) {
+  void setHelloUsingSrcAsDst(uint8_t newSrcAddress, uint32_t hardwareId)
+  {
     header.control = 0;
     header.data_size = 1 + 4;
     header.dst_address = header.src_address;
     header.src_address = newSrcAddress;
     header.ttl = RingNetworkProtocol::ttl_max;
     data[0] = RingNetworkProtocol::protocol_msgid_hello;
-    *((uint32_t*)&data[1]) = hardwareId;
+    *((uint32_t *)&data[1]) = hardwareId;
   }
 };
 
@@ -84,26 +95,38 @@ public:
   RingNetwork(PinName TxPin, PinName RxPin, uint32_t hardwareId, bool watchForSilence);
 
   // --- CoreModule ---
-  const char* getName() { return "RingNetwork"; }
-  void init(const bitLabCore*);
+  const char *getName() { return "RingNetwork"; }
+  void init(const bitLabCore *);
   void mainLoop();
   void tick(millisec timeDelta);
   // ------------------
 
-  void attachOnPacketReceived(Callback<void(RingPacket*, PTxAction*)> onPacketReceived) { this->onPacketReceived = onPacketReceived; }
+  void attachOnPacketReceived(Callback<void(RingPacket *, PTxAction *)> onPacketReceived) { this->onPacketReceived = onPacketReceived; }
 
   bool packetReceived() { return rx_packet_ready; }
-  RingPacket* getPacket() { return &rx_packet; }
+  RingPacket *getPacket() { return &rx_packet; }
   void receiveNextPacket() { rx_packet_ready = false; }
 
-  void sendPacket(const RingPacket* packet);
+  void sendPacket(const RingPacket *packet);
 
   inline bool isAddressAssigned() { return mac_state == Idle; }
   inline uint8_t getAddress() { return mac_address; }
+  inline bool getSilenceDetected()
+  {
+    if (silenceDetected)
+    {
+      silenceDetected = false;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 
 private:
   Serial serial;
-  Callback<void(RingPacket*, PTxAction*)> onPacketReceived;
+  Callback<void(RingPacket *, PTxAction *)> onPacketReceived;
 
   enum MacState
   {
@@ -126,6 +149,7 @@ private:
   MacWatcherState mac_watcher_state;
   volatile millisec mac_watcher_timeout;
   volatile millisec mac_delay_timeout;
+  bool silenceDetected;
 
   void mainLoop_UpdateWatcher(bool packetReceived);
   void mainLoop_UpdateMac(RingPacket *p);
@@ -158,7 +182,7 @@ private:
   volatile RxState rx_state;
   volatile RxState rx_state_return;
   volatile uint32_t rx_bytes_to_read;
-  volatile uint8_t* rx_bytes_dst;
+  volatile uint8_t *rx_bytes_dst;
   //TODO Understand if volatile here is needed, it spreads to read functions and i don't want it
   RingPacket rx_packet;
   volatile bool rx_packet_ready;
