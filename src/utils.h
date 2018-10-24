@@ -14,8 +14,11 @@ public:
       "NOP\n\t"
     );
   }
-  static inline int32_t clamp01(float value) {
+  static inline float clamp01(float value) {
     return max(0, min(value, 1));
+  }
+  static inline int32_t clamp(int32_t value, int32_t minValue, int32_t maxValue) {
+    return max(minValue, min(value, maxValue));
   }
   static inline int32_t min(int32_t a, int32_t b) {
     return a < b ? a : b;
@@ -44,6 +47,7 @@ public:
 
   static uint32_t crc32(uint8_t value, uint32_t init);
   static uint32_t crc32(int32_t value, uint32_t init);
+  static uint32_t crc32(uint32_t value, uint32_t init);
   static uint32_t crc32(const uint8_t *buf, uint32_t len, uint32_t init);
 };
 

@@ -2,7 +2,7 @@
 #include "..\utils.h"
 #include "stddef.h"
 
-Timeline::Timeline() : output(1)
+Timeline::Timeline() : outputHardwareId(0), outputId(0)
 {
   entries = NULL;
   entriesCount = 0;
@@ -10,7 +10,7 @@ Timeline::Timeline() : output(1)
   currentIdx = 0;
 }
 
-void Timeline::create(uint8_t output, uint8_t newEntriesCapacity)
+void Timeline::create(uint32_t outputHardwareId, uint8_t outputId, uint8_t newEntriesCapacity)
 {
   if (entries)
   {
@@ -18,7 +18,8 @@ void Timeline::create(uint8_t output, uint8_t newEntriesCapacity)
   }
   entries = new TimelineEntry[newEntriesCapacity];
   entriesCapacity = newEntriesCapacity;
-  setOutput(output);
+  this->outputHardwareId = outputHardwareId;
+  setOutputId(outputId);
   clear();
 }
 
@@ -28,9 +29,9 @@ void Timeline::clear()
   moveFirst();
 }
 
-void Timeline::setOutput(uint8_t output)
+void Timeline::setOutputId(uint8_t outputId)
 {
-  this->output = output;
+  this->outputId = outputId;
 }
 
 void Timeline::add(millisec time, int32_t value, millisec duration)
@@ -90,7 +91,8 @@ bool Timeline::isFinished()
 
 uint32_t Timeline::calcCrc32(uint32_t initialCrc) {
   auto crc32 = initialCrc;
-  crc32 = Utils::crc32(output, crc32);
+  crc32 = Utils::crc32(outputHardwareId, crc32);
+  crc32 = Utils::crc32(outputId, crc32);
   crc32 = Utils::crc32(entriesCount, crc32);
   for (uint8_t i = 0; i < entriesCount; i++)
   {

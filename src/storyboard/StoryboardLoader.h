@@ -29,15 +29,20 @@ private:
   char key[bufferSize];
   char value[bufferSize];
   Timeline tempTimeline;
+  uint32_t temp_outputHardwareId;
+  uint8_t temp_outputId;
   TimelineEntry tempTimelineEntry;
 
   bool readTimelines(int timelinesArray_ti, int timelinesCount);
   bool readEntries(Timeline* timeline, int entriesArray_ti, int entriesCount);
   bool accept(const JsonAccept_t* acceptArg);
 
-  bool tryMatchInteger(const JsonAccept_t *acceptArg,
-                       const char *expectedKey,
-                       int &result);
+  bool tryMatchInt32(const JsonAccept_t *acceptArg,
+                     const char *expectedKey,
+                     int32_t &result);
+  bool tryMatchUInt32(const JsonAccept_t *acceptArg,
+                      const char *expectedKey,
+                      uint32_t &result);
 };
 
 #endif

@@ -206,7 +206,7 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
         if (p->header.ttl <= 1)
         {
           //this whoareyou is for us, answer
-          p->setHelloUsingSrcAsDst(mac_address);
+          p->setHelloUsingSrcAsDst(mac_address, hardware_id);
           pTxAction = PTxAction::Send;
         }
         else

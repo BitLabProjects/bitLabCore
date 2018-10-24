@@ -74,10 +74,19 @@ uint32_t Utils::crc32(uint8_t value, uint32_t init)
 uint32_t Utils::crc32(int32_t value, uint32_t init)
 {
   auto crc = init;
-  crc = Utils::crc32((value>>0) & 0xff, crc);
-  crc = Utils::crc32((value>>8) & 0xff, crc);
-  crc = Utils::crc32((value>>16) & 0xff, crc);
-  crc = Utils::crc32((value>>24) & 0xff, crc);
+  crc = Utils::crc32((uint8_t)((value>>0) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value>>8) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value>>16) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value>>24) & 0xff), crc);
+  return crc;
+}
+uint32_t Utils::crc32(uint32_t value, uint32_t init)
+{
+  auto crc = init;
+  crc = Utils::crc32((uint8_t)((value>>0) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value>>8) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value>>16) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value>>24) & 0xff), crc);
   return crc;
 }
 uint32_t Utils::crc32(const uint8_t *buf, uint32_t len, uint32_t init)

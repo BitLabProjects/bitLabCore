@@ -3,6 +3,7 @@
 
 #include "..\json\Json.h"
 #include "..\os\os.h"
+#include "..\utils.h"
 
 StoryboardLoader::StoryboardLoader(Storyboard *storyboard, const char *jsonContent) : 
   storyboard(storyboard), json(jsonContent, strlen(jsonContent), callback(this, &StoryboardLoader::accept))
@@ -14,7 +15,7 @@ bool StoryboardLoader::load()
   int totalDurationTODO = 0;
   storyboard->create(8 + 32, totalDurationTODO);
   state = SLS_Begin;
-  tempTimeline.create(1, 100);
+  tempTimeline.create(1, 1, 100);
   //Os::debug("Parsing...\n");
   json.parse();
   //Os::debug("Parsed\n");
@@ -45,15 +46,28 @@ bool strCpyWithDefaultAndMaxLen(const char *src, int srcLen, char *dst, int dstS
   return true;
 }
 
-bool StoryboardLoader::tryMatchInteger(const JsonAccept_t *acceptArg,
-                                       const char *expectedKey,
-                                       int &result)
+bool StoryboardLoader::tryMatchInt32(const JsonAccept_t *acceptArg,
+                                     const char *expectedKey,
+                                     int32_t &result)
 {
   if ((acceptArg->type == Json_Accept_KeyValue) &&
       (streq(key, expectedKey)) &&
       (!acceptArg->valueIsString))
   {
-    result = atoi(value);
+    result = strtol(value, NULL, 10);
+    return true;
+  }
+  return false;
+}
+bool StoryboardLoader::tryMatchUInt32(const JsonAccept_t *acceptArg,
+                                      const char *expectedKey,
+                                      uint32_t &result)
+{
+  if ((acceptArg->type == Json_Accept_KeyValue) &&
+      (streq(key, expectedKey)) &&
+      (!acceptArg->valueIsString))
+  {
+    result = strtoul(value, NULL, 10);
     return true;
   }
   return false;
@@ -110,6 +124,8 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     {
       //Os::debug("  timeline {\n");
       tempTimeline.clear();
+      temp_outputHardwareId = 0;
+      temp_outputId = 0;
       state = SLS_Timeline;
       return true;
     }
@@ -124,11 +140,15 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
   case SLS_Timeline:
     // TODO name
     // TODO outputType
-    int outputId;
-    if (tryMatchInteger(acceptArg, "outputId", outputId))
+    int32_t intValue;
+    if (tryMatchInt32(acceptArg, "outputId", intValue))
     {
       //Os::debug("    outputId=%i\n", outputId);
-      tempTimeline.setOutput(outputId);
+      temp_outputId = Utils::clamp(intValue, 0, 255);
+      return true;
+    }
+    if (tryMatchUInt32(acceptArg, "outputHardwareId", temp_outputHardwareId))
+    {
       return true;
     }
 
@@ -144,7 +164,9 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
       // Timeline finished, add it to the storyboard
       //Os::debug("  timeline }\n");
 
-      Timeline *dstTimeline = storyboard->addTimeline(tempTimeline.getOutput(), tempTimeline.getEntriesCount());
+      Timeline *dstTimeline = storyboard->addTimeline(temp_outputHardwareId, 
+                                                      temp_outputId, 
+                                                      tempTimeline.getEntriesCount());
       tempTimeline.moveFirst();
       while (!tempTimeline.isFinished())
       {
@@ -176,24 +198,24 @@ bool StoryboardLoader::accept(const JsonAccept_t *acceptArg)
     break;
 
   case SLS_Entry:
-    int time;
-    if (tryMatchInteger(acceptArg, "time", time))
+    int32_t time;
+    if (tryMatchInt32(acceptArg, "time", time))
     {
       //Os::debug("        time=%i\n", time);
       tempTimelineEntry.time = time;
       return true;
     }
 
-    int duration;
-    if (tryMatchInteger(acceptArg, "duration", duration))
+    int32_t duration;
+    if (tryMatchInt32(acceptArg, "duration", duration))
     {
       //Os::debug("        duration=%i\n", duration);
       tempTimelineEntry.duration = duration;
       return true;
     }
 
-    int value;
-    if (tryMatchInteger(acceptArg, "value", value))
+    int32_t value;
+    if (tryMatchInt32(acceptArg, "value", value))
     {
       //Os::debug("        value=%i\n", value);
       tempTimelineEntry.value = value;

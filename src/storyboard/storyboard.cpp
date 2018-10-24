@@ -8,6 +8,7 @@ Storyboard::Storyboard()
   timelines = NULL;
   timelinesCapacity = 0;
   timelinesCount = 0;
+  duration = 0;
 }
 
 void Storyboard::create(uint8_t newTimelinesCapacity, millisec totalDuration)
@@ -21,11 +22,11 @@ void Storyboard::create(uint8_t newTimelinesCapacity, millisec totalDuration)
   duration = totalDuration;
 }
 
-Timeline *Storyboard::addTimeline(uint8_t output, uint8_t newEntriesCapacity)
+Timeline *Storyboard::addTimeline(uint32_t outputHardwareId, uint8_t outputId, uint8_t newEntriesCapacity)
 {
   if (timelinesCount < timelinesCapacity)
   {
-    timelines[timelinesCount].create(output, newEntriesCapacity);
+    timelines[timelinesCount].create(outputHardwareId, outputId, newEntriesCapacity);
     timelinesCount += 1;
   }
   else
@@ -38,7 +39,7 @@ Timeline *Storyboard::addTimeline(uint8_t output, uint8_t newEntriesCapacity)
 
 Timeline *Storyboard::getTimeline(uint8_t output)
 {
-  return &timelines[getTimelineIdx(output)];
+  return getTimelineByIdx(getTimelineIdx(output));
 }
 
 bool Storyboard::isFinished(millisec currTime)

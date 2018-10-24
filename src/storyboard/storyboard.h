@@ -10,8 +10,9 @@ public:
   Storyboard();
 
   void create(uint8_t newTimelinesCapacity, millisec totalDuration);
-  Timeline* addTimeline(uint8_t output, uint8_t newEntriesCapacity);
+  Timeline* addTimeline(uint32_t outputHardwareId, uint8_t outputId, uint8_t newEntriesCapacity);
   Timeline* getTimeline(uint8_t output);
+  inline Timeline* getTimelineByIdx(uint8_t idx) { return &timelines[idx]; };
   bool isFinished(millisec currTime);
   inline millisec getDuration() { return duration; }
   void reset();

@@ -41,6 +41,16 @@ struct __packed RingPacket {
   inline bool isForDstAddress(uint8_t dst_address) {
     return header.dst_address == dst_address;
   }
+  inline bool isDataPacket(uint8_t dst_address, uint8_t minDataSize, uint8_t msgId) {
+    return (isProtocolPacket() &&
+            isForDstAddress(dst_address) &&
+            header.data_size >= minDataSize &&
+            data[0] == msgId);
+  }
+
+  inline uint32_t getDataUInt32(uint8_t offset) {
+    return *((uint32_t*)&data[offset]);
+  }
 
   void setFreePacket() {
     header.control = 0;
@@ -50,13 +60,14 @@ struct __packed RingPacket {
     header.ttl = RingNetworkProtocol::ttl_max;
   }
 
-  void setHelloUsingSrcAsDst(uint8_t newSrcAddress) {
+  void setHelloUsingSrcAsDst(uint8_t newSrcAddress, uint32_t hardwareId) {
     header.control = 0;
-    header.data_size = 1;
+    header.data_size = 1 + 4;
     header.dst_address = header.src_address;
     header.src_address = newSrcAddress;
     header.ttl = RingNetworkProtocol::ttl_max;
     data[0] = RingNetworkProtocol::protocol_msgid_hello;
+    *((uint32_t*)&data[1]) = hardwareId;
   }
 };
 
