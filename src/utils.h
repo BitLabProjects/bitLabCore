@@ -49,6 +49,16 @@ public:
   static uint32_t crc32(int32_t value, uint32_t init);
   static uint32_t crc32(uint32_t value, uint32_t init);
   static uint32_t crc32(const uint8_t *buf, uint32_t len, uint32_t init);
+
+  static inline void memCopy4(void* dst, void* src) {
+    *((uint8_t*)dst+0) = *((uint8_t*)src+0);
+    *((uint8_t*)dst+1) = *((uint8_t*)src+1);
+    *((uint8_t*)dst+2) = *((uint8_t*)src+2);
+    *((uint8_t*)dst+3) = *((uint8_t*)src+3);
+  }
+
+  static void strprint(char** dst, uint32_t& size, uint32_t value, uint32_t base = 10);
+  static void strprint(char** dst, uint32_t& size, const char* src)
 };
 
 #endif
