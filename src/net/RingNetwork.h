@@ -3,6 +3,7 @@
 
 #include "mbed.h"
 #include "..\os\CoreModule.h"
+#include "..\utils.h"
 
 class RingNetworkProtocol
 {
@@ -56,27 +57,26 @@ struct __packed RingPacket
             data[0] == msgId);
   }
 
+  
   uint32_t getDataUInt32(uint8_t offset)
   {
     uint32_t result;
-    auto src = &data[offset];
-    auto dst = (uint8_t*)&result;
-    *(dst+0) = *(src+0);
-    *(dst+1) = *(src+1);
-    *(dst+2) = *(src+2);
-    *(dst+3) = *(src+3);
+    Utils::memCopy4(&result, &data[offset]);
     return result;
   }
   int32_t getDataInt32(uint8_t offset)
   {
     int32_t result;
-    auto src = &data[offset];
-    auto dst = (uint8_t*)&result;
-    *(dst+0) = *(src+0);
-    *(dst+1) = *(src+1);
-    *(dst+2) = *(src+2);
-    *(dst+3) = *(src+3);
+    Utils::memCopy4(&result, &data[offset]);
     return result;
+  }
+  void setDataUInt32(uint8_t offset, uint32_t value)
+  {
+    Utils::memCopy4(&data[offset], &value);
+  }
+  void setDataInt32(uint8_t offset, int32_t value)
+  {
+    Utils::memCopy4(&data[offset], &value);
   }
 
   void setFreePacket()

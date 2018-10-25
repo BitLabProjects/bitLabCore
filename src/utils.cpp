@@ -99,3 +99,32 @@ uint32_t Utils::crc32(const uint8_t *buf, uint32_t len, uint32_t init)
   }
   return crc;
 }
+
+void Utils::strprint(char** dst, uint32_t& size, uint32_t value, uint32_t base) {
+  char* dst_local = *dst;
+  while (size > 1) {
+    auto module = value % base;
+    if (module < 10)
+      *dst_local++ = '0' + module;
+    else
+      *dst_local++ = 'A' + (module-10);
+    value = value / base;
+    size--;
+
+    // Do not check as part of while clause so we enter here at least once, handling the case
+    // where value is zero from the beginning
+    if (value == 0)
+      break;
+  }
+  *dst_local = '\0';
+  *dst = dst_local;
+}
+void Utils::strprint(char** dst, uint32_t& size, const char* src) {
+  char* dst_local = *dst;
+  while (size > 1 && *src != 0) {
+    *dst_local++ = *src++;
+    size--;
+  }
+  *dst_local = '\0';
+  *dst = dst_local;
+}
