@@ -19,7 +19,6 @@ public:
   bool getNextTimelineAndEntry(millisec time, uint8_t* output, const TimelineEntry** entry);
   
   inline uint8_t getTimelinesCount() { return timelinesCount; };
-  uint8_t getEntriesCount(uint8_t output);
 
   uint32_t calcCrc32(uint32_t initialCrc);
 

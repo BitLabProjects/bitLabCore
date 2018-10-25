@@ -30,11 +30,11 @@ public:
   void add(millisec time, int32_t value, millisec duration);
   void setEntry(uint8_t entryIdx, millisec time, int32_t value, millisec duration);
   const TimelineEntry *getCurrent();
-  const TimelineEntry *getEntry(int idx) { return &entries[idx]; };
+  const TimelineEntry *getEntry(int idx) { return &entries[idx]; }
   void moveFirst();
   void moveNext();
   bool isFinished();
-  uint8_t getEntriesCount();
+  inline uint8_t getEntriesCount() { return entriesCount; }
 
   uint32_t calcCrc32(uint32_t initialCrc);
 
