@@ -28,22 +28,22 @@ public:
   uint32_t getOutputHardwareId() { return outputHardwareId; }
   uint8_t getOutputId() { return outputId; }
   void add(millisec time, int32_t value, millisec duration);
-  void set(uint8_t entryIdx, millisec time, int32_t value, millisec duration);
+  void setEntry(uint8_t entryIdx, millisec time, int32_t value, millisec duration);
   const TimelineEntry *getCurrent();
   const TimelineEntry *getEntry(int idx) { return &entries[idx]; };
   void moveFirst();
   void moveNext();
   bool isFinished();
-  uint8_t getEntriesCount() { return entriesCount; }
+  uint8_t getEntriesCount();
 
   uint32_t calcCrc32(uint32_t initialCrc);
 
 private:
   uint32_t outputHardwareId;
   uint8_t outputId;
-  TimelineEntry *entries;
+  const static uint8_t entriesCapacity = 10;
+  TimelineEntry entries[entriesCapacity];
   uint8_t entriesCount;
-  uint8_t entriesCapacity;
   uint8_t currentIdx;
 };
 

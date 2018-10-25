@@ -24,12 +24,10 @@ public:
   uint32_t calcCrc32(uint32_t initialCrc);
 
 private:
-  Timeline *timelines;
-  uint8_t timelinesCapacity;
+  const static uint8_t timelinesCapacity = 16;
+  Timeline timelines[timelinesCapacity];
   uint8_t timelinesCount;
   millisec duration;
-
-  uint8_t getTimelineIdx(uint8_t output);
 };
 
 #endif

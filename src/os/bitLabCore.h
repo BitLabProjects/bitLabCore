@@ -20,7 +20,7 @@ public:
   void addModule(CoreModule* module);
   void run();
 
-  inline uint32_t getHardwareId() { return hardware_id; };
+  inline uint32_t getHardwareId() const { return hardware_id; };
 
   const CoreModule* findModule(const char* name) const;
 

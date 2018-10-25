@@ -4,20 +4,22 @@
 
 Timeline::Timeline() : outputHardwareId(0), outputId(0)
 {
-  entries = NULL;
+  //entries = NULL;
+  //entriesCapacity = 0;
   entriesCount = 0;
-  entriesCapacity = 0;
   currentIdx = 0;
 }
 
 void Timeline::create(uint32_t outputHardwareId, uint8_t outputId, uint8_t newEntriesCapacity)
 {
+  /*
   if (entries)
   {
     delete[] entries;
   }
   entries = new TimelineEntry[newEntriesCapacity];
   entriesCapacity = newEntriesCapacity;
+  */
   this->outputHardwareId = outputHardwareId;
   setOutputId(outputId);
   clear();
@@ -53,10 +55,10 @@ void Timeline::add(millisec time, int32_t value, millisec duration)
   }
 
   entriesCount += 1;
-  set(entriesCount - 1, time, value, duration);
+  setEntry(entriesCount - 1, time, value, duration);
 }
 
-void Timeline::set(uint8_t entryIdx, millisec time, int32_t value, millisec duration)
+void Timeline::setEntry(uint8_t entryIdx, millisec time, int32_t value, millisec duration)
 {
   if (entryIdx >= entriesCount) {
     // TODO signal

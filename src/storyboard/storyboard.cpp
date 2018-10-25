@@ -5,20 +5,22 @@
 
 Storyboard::Storyboard()
 {
-  timelines = NULL;
-  timelinesCapacity = 0;
+  //timelines = NULL;
+  //timelinesCapacity = 0;
   timelinesCount = 0;
   duration = 0;
 }
 
 void Storyboard::create(uint8_t newTimelinesCapacity, millisec totalDuration)
 {
+  /*
   if (timelines)
   {
     delete[] timelines;
   }
   timelines = new Timeline[newTimelinesCapacity];
   timelinesCapacity = newTimelinesCapacity;
+  */
   duration = totalDuration;
 }
 
@@ -39,7 +41,14 @@ Timeline *Storyboard::addTimeline(uint32_t outputHardwareId, uint8_t outputId, u
 
 Timeline *Storyboard::getTimeline(uint8_t output)
 {
-  return getTimelineByIdx(getTimelineIdx(output));
+  for (int8_t idx = 0; idx < timelinesCount; idx++)
+  {
+    if (timelines[idx].getOutputId() == output)
+    {
+      return &timelines[idx];
+    }
+  }
+  return NULL;
 }
 
 bool Storyboard::isFinished(millisec currTime)
@@ -55,7 +64,7 @@ void Storyboard::reset()
   }
 }
 
-bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t* output, const TimelineEntry** entry) 
+bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t *output, const TimelineEntry **entry)
 {
   if (isFinished(time))
   {
@@ -73,17 +82,21 @@ bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t* output, const T
       //Os::debug("next search: #%i is finished...\n", idx+1);
       continue;
     }
-    const TimelineEntry* curr = timelines[idx].getCurrent();
-    if (idxBest == -1 || curr->time < timeBest) {
+    const TimelineEntry *curr = timelines[idx].getCurrent();
+    if (idxBest == -1 || curr->time < timeBest)
+    {
       //Os::debug("next search: #%i is better, %i ms < %i ms...\n", idx+1, curr->time, timeBest);
       idxBest = idx;
       timeBest = curr->time;
-    } else {
+    }
+    else
+    {
       //Os::debug("next search: #%i is worse, %i ms >= %i ms...\n", idx+1, curr->time, timeBest);
     }
   }
 
-  if (idxBest == -1) {
+  if (idxBest == -1)
+  {
     // All timelines finished
     //Os::debug("next search: nothing found\n");
     return false;
@@ -99,12 +112,8 @@ bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t* output, const T
   return true;
 }
 
-uint8_t Storyboard::getTimelineIdx(uint8_t output)
+uint32_t Storyboard::calcCrc32(uint32_t initialCrc)
 {
-  return Utils::max(0, Utils::min((uint8_t)(output - 1), (uint8_t)(timelinesCount - 1)));
-}
-
-uint32_t Storyboard::calcCrc32(uint32_t initialCrc) {
   auto crc32 = initialCrc;
   //Always insert a 123 in the crc to avoid having a zero when no timeline is present
   crc32 = Utils::crc32((uint8_t)123, crc32);

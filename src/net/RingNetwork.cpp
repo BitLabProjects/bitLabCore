@@ -1,11 +1,11 @@
 #include "RingNetwork.h"
 #include "..\os\os.h"
+#include "..\os\bitLabCore.h"
 
 RingNetwork::RingNetwork(PinName TxPin,
                          PinName RxPin,
-                         uint32_t hardwareId,
                          bool watchForSilence) : serial(TxPin, RxPin),
-                                                 hardware_id(hardwareId),
+                                                 hardware_id(0),
                                                  mac_state(MacState::AddressNotAssigned),
                                                  mac_address(0),
                                                  watchForSilence(watchForSilence),
@@ -25,6 +25,7 @@ RingNetwork::RingNetwork(PinName TxPin,
 
 void RingNetwork::init(const bitLabCore *core)
 {
+  hardware_id = core->getHardwareId();
   serial.baud(115200);
   serial.attach(callback(this, &RingNetwork::rxIrq), Serial::RxIrq);
   //Do not attach TxIrq here: it will be done when needed and the txIrq method detaches itself when there's nothing to transmit
