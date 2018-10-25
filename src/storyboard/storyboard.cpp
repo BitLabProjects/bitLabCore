@@ -21,6 +21,7 @@ void Storyboard::create(uint8_t newTimelinesCapacity, millisec totalDuration)
   timelines = new Timeline[newTimelinesCapacity];
   timelinesCapacity = newTimelinesCapacity;
   */
+  timelinesCount = 0;
   duration = totalDuration;
 }
 
