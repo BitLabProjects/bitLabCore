@@ -2,7 +2,7 @@
 
 #include "..\os\os.h"
 
-StoryboardPlayer::StoryboardPlayer(Storyboard *storyboard, Callback<void(int, int, millisec, millisec)> onSetOutput) : storyboard(storyboard),
+StoryboardPlayer::StoryboardPlayer(Storyboard *storyboard, Callback<void(const PlayBufferEntry*)> onSetOutput) : storyboard(storyboard),
                                                                                                                        onSetOutput(onSetOutput)
 {
   playBufferCount = 10;
@@ -53,9 +53,9 @@ void StoryboardPlayer::fillPlayBuffer()
   while (playBufferHead != playBufferLast)
   {
     // Find next and put it in head position, then increment head
-    uint8_t output;
+    uint8_t outputId;
     const TimelineEntry *entry;
-    if (!storyboard->getNextTimelineAndEntry(playBufferHeadTime, &output, &entry))
+    if (!storyboard->getNextTimelineAndEntry(playBufferHeadTime, &outputId, &entry))
     {
       if (lastCycleWasReset)
       {
@@ -72,7 +72,7 @@ void StoryboardPlayer::fillPlayBuffer()
       continue;
     }
     //Os::debug("play buffer: adding #%i at %i ms to %i in %i ms\n", output, entry->time, entry->value, entry->duration);
-    playBuffer[playBufferHead].output = output;
+    playBuffer[playBufferHead].outputId = outputId;
     playBuffer[playBufferHead].entry = *entry;
     playBufferHeadTime = entry->time;
 
@@ -115,10 +115,7 @@ void StoryboardPlayer::executePlayBuffer()
     if (entryTime >= playBufferTailTime && entryTime <= storyboardTime)
     {
       //Apply!
-      onSetOutput(pbEntry->output, 
-                  pbEntry->entry.value, 
-                  pbEntry->entry.time, 
-                  pbEntry->entry.duration);
+      onSetOutput(pbEntry);
       playBufferTailTime = entryTime;
       playBufferTail = (playBufferTail + 1) % playBufferCount;
     }

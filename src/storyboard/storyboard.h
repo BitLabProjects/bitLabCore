@@ -16,7 +16,7 @@ public:
   bool isFinished(millisec currTime);
   inline millisec getDuration() { return duration; }
   void reset();
-  bool getNextTimelineAndEntry(millisec time, uint8_t* output, const TimelineEntry** entry);
+  bool getNextTimelineAndEntry(millisec time, uint8_t* outputId, const TimelineEntry** entry);
   
   inline uint8_t getTimelinesCount() { return timelinesCount; };
 

@@ -6,7 +6,7 @@
 
 struct PlayBufferEntry
 {
-  int32_t output;
+  int32_t outputId;
   TimelineEntry entry;
 };
 
@@ -19,7 +19,7 @@ enum PlayStatus
 
 class StoryboardPlayer {
 public:
-  StoryboardPlayer(Storyboard* storyboard, Callback<void(int, int, millisec, millisec)> onSetOutput);
+  StoryboardPlayer(Storyboard* storyboard, Callback<void(const PlayBufferEntry*)> onSetOutput);
 
   void fillPlayBuffer();
   void advance(millisec timeDelta);
@@ -32,7 +32,7 @@ public:
 
 private:
   Storyboard* storyboard;
-  Callback<void(int, int, millisec, millisec)> onSetOutput;
+  Callback<void(const PlayBufferEntry*)> onSetOutput;
 
   //Circular buffer for storyboard playing
   PlayStatus playStatus;

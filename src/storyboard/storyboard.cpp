@@ -65,7 +65,7 @@ void Storyboard::reset()
   }
 }
 
-bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t *output, const TimelineEntry **entry)
+bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t *outputId, const TimelineEntry **entry)
 {
   if (isFinished(time))
   {
@@ -104,7 +104,7 @@ bool Storyboard::getNextTimelineAndEntry(millisec time, uint8_t *output, const T
   }
 
   // One found, return it and advance the relative timeline by one
-  *output = idxBest + 1;
+  *outputId = timelines[idxBest].getOutputId();
   *entry = timelines[idxBest].getCurrent();
   timelines[idxBest].moveNext();
 
