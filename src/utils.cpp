@@ -74,19 +74,19 @@ uint32_t Utils::crc32(uint8_t value, uint32_t init)
 uint32_t Utils::crc32(int32_t value, uint32_t init)
 {
   auto crc = init;
-  crc = Utils::crc32((uint8_t)((value>>0) & 0xff), crc);
-  crc = Utils::crc32((uint8_t)((value>>8) & 0xff), crc);
-  crc = Utils::crc32((uint8_t)((value>>16) & 0xff), crc);
-  crc = Utils::crc32((uint8_t)((value>>24) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 0) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 8) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 16) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 24) & 0xff), crc);
   return crc;
 }
 uint32_t Utils::crc32(uint32_t value, uint32_t init)
 {
   auto crc = init;
-  crc = Utils::crc32((uint8_t)((value>>0) & 0xff), crc);
-  crc = Utils::crc32((uint8_t)((value>>8) & 0xff), crc);
-  crc = Utils::crc32((uint8_t)((value>>16) & 0xff), crc);
-  crc = Utils::crc32((uint8_t)((value>>24) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 0) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 8) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 16) & 0xff), crc);
+  crc = Utils::crc32((uint8_t)((value >> 24) & 0xff), crc);
   return crc;
 }
 uint32_t Utils::crc32(const uint8_t *buf, uint32_t len, uint32_t init)
@@ -100,14 +100,16 @@ uint32_t Utils::crc32(const uint8_t *buf, uint32_t len, uint32_t init)
   return crc;
 }
 
-void Utils::strprint(char** dst, uint32_t& size, uint32_t value, uint32_t base) {
-  char* dst_local = *dst;
-  while (size > 1) {
+void Utils::strprint(char **dst, uint32_t &size, uint32_t value, uint32_t base)
+{
+  char *dst_local = *dst;
+  while (size > 1)
+  {
     auto module = value % base;
     if (module < 10)
       *dst_local++ = '0' + module;
     else
-      *dst_local++ = 'A' + (module-10);
+      *dst_local++ = 'A' + (module - 10);
     value = value / base;
     size--;
 
@@ -119,12 +121,46 @@ void Utils::strprint(char** dst, uint32_t& size, uint32_t value, uint32_t base) 
   *dst_local = '\0';
   *dst = dst_local;
 }
-void Utils::strprint(char** dst, uint32_t& size, const char* src) {
-  char* dst_local = *dst;
-  while (size > 1 && *src != 0) {
+void Utils::strprint(char **dst, uint32_t &size, const char *src)
+{
+  char *dst_local = *dst;
+  while (size > 1 && *src != 0)
+  {
     *dst_local++ = *src++;
     size--;
   }
   *dst_local = '\0';
   *dst = dst_local;
+}
+
+bool Utils::strTryParse(const char *src, uint32_t size, uint32_t &value, uint32_t base)
+{
+  value = 0;
+  // Parse a UInt32 from <size> characters in <src>
+  while (size > 0)
+  {
+    auto currChar = *src;
+    uint32_t valueToSum;
+    if (currChar >= '0' && currChar <= '9')
+    {
+      valueToSum = currChar - '0';
+    }
+    else if (currChar >= 'A' && currChar <= 'Z')
+    {
+      valueToSum = currChar - 'A';
+    }
+    else if (currChar >= 'a' && currChar <= 'z')
+    {
+      valueToSum = currChar - 'a';
+    }
+    else
+    {
+      return false;
+    }
+
+    value = value * base + valueToSum;
+    src += 1;
+    size--;
+  }
+  return true;
 }
