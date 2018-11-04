@@ -20,7 +20,13 @@ public:
   static inline int32_t clamp(int32_t value, int32_t minValue, int32_t maxValue) {
     return max(minValue, min(value, maxValue));
   }
+  static inline uint32_t clamp(uint32_t value, uint32_t minValue, uint32_t maxValue) {
+    return max(minValue, min(value, maxValue));
+  }
   static inline int32_t min(int32_t a, int32_t b) {
+    return a < b ? a : b;
+  }
+  static inline uint32_t min(uint32_t a, uint32_t b) {
     return a < b ? a : b;
   }
   static inline uint8_t min(uint8_t a, uint8_t b) {
@@ -30,6 +36,9 @@ public:
     return a < b ? a : b;
   }
   static inline int32_t max(int32_t a, int32_t b) {
+    return a > b ? a : b;
+  }
+  static inline uint32_t max(uint32_t a, uint32_t b) {
     return a > b ? a : b;
   }
   static inline uint8_t max(uint8_t a, uint8_t b) {
@@ -59,6 +68,7 @@ public:
 
   static void strprint(char** dst, uint32_t& size, uint32_t value, uint32_t base = 10);
   static void strprint(char** dst, uint32_t& size, const char* src);
+  static bool strTryParse(const char* src, uint32_t size, uint32_t& value, uint32_t base = 10);
 };
 
 #endif
