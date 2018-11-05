@@ -28,6 +28,7 @@ public:
   void pause();
   void stop();
 
+  bool isPlaying() { return playStatus == PlayStatus::Playing; }
   millisec64 getStoryboardTime() { return storyboardTime; }
 
 private:
