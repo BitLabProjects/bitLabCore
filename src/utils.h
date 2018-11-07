@@ -59,6 +59,11 @@ public:
   static uint32_t crc32(uint32_t value, uint32_t init);
   static uint32_t crc32(const uint8_t *buf, uint32_t len, uint32_t init);
 
+  static bool tryBase64Decode(const char *input, uint32_t inputLength,
+                              uint8_t *output, uint32_t outputSize, uint32_t *outputLength);
+  static bool tryBase64Encode(const uint8_t *input, uint32_t inputLength,
+                              uint8_t *output, uint32_t outputSize, uint32_t *outputLength);
+
   static inline void memCopy4(void* dst, void* src) {
     *((uint8_t*)dst+0) = *((uint8_t*)src+0);
     *((uint8_t*)dst+1) = *((uint8_t*)src+1);

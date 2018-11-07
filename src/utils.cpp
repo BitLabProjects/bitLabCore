@@ -100,6 +100,107 @@ uint32_t Utils::crc32(const uint8_t *buf, uint32_t len, uint32_t init)
   return crc;
 }
 
+char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                         'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                         'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                         'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+                         'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                         'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                         'w', 'x', 'y', 'z', '0', '1', '2', '3',
+                         '4', '5', '6', '7', '8', '9', '+', '/'};
+uint8_t decoding_table[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 0, 63,
+                            52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0,
+                            0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                            15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0,
+                            0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                            41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int mod_table[] = {0, 2, 1};
+
+bool Utils::tryBase64Encode(const uint8_t *input,
+                            uint32_t inputLength,
+                            uint8_t *output,
+                            uint32_t outputSize,
+                            uint32_t *outputLength)
+{
+  *outputLength = 4 * ((inputLength + 2) / 3);
+
+  // Check for sufficient output space
+  if (*outputLength > outputSize)
+    return false;
+
+  for (uint32_t i = 0, j = 0; i < inputLength;)
+  {
+
+    uint32_t octet_a = i < inputLength ? (unsigned char)input[i++] : 0;
+    uint32_t octet_b = i < inputLength ? (unsigned char)input[i++] : 0;
+    uint32_t octet_c = i < inputLength ? (unsigned char)input[i++] : 0;
+
+    uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
+
+    output[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
+    output[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
+    output[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
+    output[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+  }
+
+  for (int i = 0; i < mod_table[inputLength % 3]; i++)
+    output[*outputLength - 1 - i] = '=';
+
+  return true;
+}
+
+bool Utils::tryBase64Decode(const char *input,
+                            uint32_t inputLength,
+                            uint8_t *output,
+                            uint32_t outputSize,
+                            uint32_t *outputLength)
+{
+  if (inputLength % 4 != 0)
+    return false;
+
+  *outputLength = inputLength / 4 * 3;
+  if (input[inputLength - 1] == '=')
+    (*outputLength)--;
+  if (input[inputLength - 2] == '=')
+    (*outputLength)--;
+
+  // Check for sufficient output space
+  if (*outputLength > outputSize)
+    return false;
+
+  for (uint32_t i = 0, j = 0; i < inputLength;)
+  {
+    uint32_t sextet_a = input[i] == '=' ? 0 & i++ : decoding_table[((uint8_t*)input)[i++]];
+    uint32_t sextet_b = input[i] == '=' ? 0 & i++ : decoding_table[((uint8_t*)input)[i++]];
+    uint32_t sextet_c = input[i] == '=' ? 0 & i++ : decoding_table[((uint8_t*)input)[i++]];
+    uint32_t sextet_d = input[i] == '=' ? 0 & i++ : decoding_table[((uint8_t*)input)[i++]];
+
+    uint32_t triple = (sextet_a << 3 * 6) +
+                      (sextet_b << 2 * 6) +
+                      (sextet_c << 1 * 6) +
+                      (sextet_d << 0 * 6);
+
+    if (j < *outputLength)
+      output[j++] = (triple >> 2 * 8) & 0xFF;
+    if (j < *outputLength)
+      output[j++] = (triple >> 1 * 8) & 0xFF;
+    if (j < *outputLength)
+      output[j++] = (triple >> 0 * 8) & 0xFF;
+  }
+
+  return true;
+}
+
 void Utils::strprint(char **dst, uint32_t &size, uint32_t value, uint32_t base)
 {
   char *dst_local = *dst;
@@ -137,6 +238,7 @@ bool Utils::strTryParse(const char *src, uint32_t size, uint32_t &value, uint32_
 {
   value = 0;
   // Parse a UInt32 from <size> characters in <src>
+  // TODO verify min-max values
   while (size > 0)
   {
     auto currChar = *src;
