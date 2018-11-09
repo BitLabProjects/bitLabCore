@@ -249,11 +249,11 @@ bool Utils::strTryParse(const char *src, uint32_t size, uint32_t &value, uint32_
     }
     else if (currChar >= 'A' && currChar <= 'Z')
     {
-      valueToSum = currChar - 'A';
+      valueToSum = currChar - 'A' + 10;
     }
     else if (currChar >= 'a' && currChar <= 'z')
     {
-      valueToSum = currChar - 'a';
+      valueToSum = currChar - 'a' + 10;
     }
     else
     {
