@@ -129,18 +129,7 @@ public:
 
   inline bool isAddressAssigned() { return mac_state == Idle; }
   inline uint8_t getAddress() { return mac_address; }
-  inline bool getSilenceDetected()
-  {
-    if (silenceDetected)
-    {
-      silenceDetected = false;
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
+  inline bool getIsConnected() { return is_connected; }
 
 private:
   Serial serial;
@@ -167,7 +156,7 @@ private:
   MacWatcherState mac_watcher_state;
   volatile millisec mac_watcher_timeout;
   volatile millisec mac_delay_timeout;
-  bool silenceDetected;
+  bool is_connected;
 
   void mainLoop_UpdateWatcher(bool packetReceived);
   void mainLoop_UpdateMac(RingPacket *p);

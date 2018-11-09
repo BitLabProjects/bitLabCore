@@ -260,6 +260,7 @@ void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
   if (packetReceived)
   {
     mac_watcher_state = MacWatcherState::Start;
+    is_connected = true;
   }
 
   // TODO atomic access of mac_watcher_timeout
@@ -282,7 +283,7 @@ void RingNetwork::mainLoop_UpdateWatcher(bool packetReceived)
   case MacWatcherState::WaitingAfterSilence:
     if (mac_watcher_timeout == 0)
     {
-      silenceDetected = true;
+      is_connected = false;
       RingPacket p;
       p.setFreePacket();
       sendPacket(&p);
