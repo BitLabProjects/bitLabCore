@@ -115,3 +115,19 @@ int bitLabCore::getUsedHeap()
   mbed_stats_heap_get(&heap);
   return heap.current_size;
 }
+
+const char* bitLabCore::getClockSourceDescr() const
+{
+  RCC_ClkInitTypeDef clockInit;
+  uint32_t pfLatency;
+  HAL_RCC_GetClockConfig(&clockInit, &pfLatency);
+  if (clockInit.SYSCLKSource == RCC_SYSCLKSOURCE_HSI) return "HSI";
+  if (clockInit.SYSCLKSource == RCC_SYSCLKSOURCE_HSE) return "HSE";
+  if (clockInit.SYSCLKSource == RCC_SYSCLKSOURCE_PLLCLK) {
+    if (__HAL_RCC_GET_PLL_OSCSOURCE() == RCC_PLLSOURCE_HSI)
+      return "PLL-HSI";
+    else
+      return "PLL-HSE";
+  }
+  return "Unknown";
+}

@@ -21,6 +21,7 @@ public:
   void run();
 
   inline uint32_t getHardwareId() const { return hardware_id; };
+  const char *getClockSourceDescr() const;
 
   const CoreModule* findModule(const char* name) const;
 
