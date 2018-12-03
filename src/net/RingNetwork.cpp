@@ -61,7 +61,13 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
   case MacState::AddressNotAssigned:
     if (p->isFreePacket())
     {
-      mac_address = hardware_id & 255;
+      mac_address = ((hardware_id >>  0) & 255) ^
+                    ((hardware_id >>  8) & 255) ^
+                    ((hardware_id >> 16) & 255) ^ 
+                    ((hardware_id >> 24) & 255);
+      if (mac_address == RingNetworkProtocol::broadcast_address) {
+        mac_address = 254;
+      }
       mac_device_name[0] = 'D';
       mac_device_name[1] = 'e';
       mac_device_name[2] = 'v';
@@ -157,7 +163,20 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
     break;
 
   case MacState::Idle:
-    if (p->isForDstAddress(mac_address))
+    if (p->isBroadcast()) {
+      // If it's a broadcast, override the pTxAction: pass along if not from us, send free if we generated it
+      if (p->header.src_address == mac_address) {
+        pTxAction = PTxAction::SendFreePacket;
+      } else {
+        if (onPacketReceived)
+        {
+          // Note that the callback can't modify the packet
+          onPacketReceived.call(p, &pTxAction);
+        }
+        pTxAction = PTxAction::PassAlongDecreasingTTL;
+      }
+    }
+    else if (p->isForDstAddress(mac_address))
     {
       if (p->isProtocolPacket())
       {

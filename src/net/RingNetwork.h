@@ -8,6 +8,7 @@
 class RingNetworkProtocol
 {
 public:
+  static const uint8_t broadcast_address = 255;
   static const uint32_t packet_maxsize = 265;
   static const uint8_t ttl_max = 10;
   static const uint32_t device_name_maxsize = 16;
@@ -48,6 +49,10 @@ struct __packed RingPacket
   inline bool isForDstAddress(uint8_t dst_address)
   {
     return header.dst_address == dst_address;
+  }
+  inline bool isBroadcast()
+  {
+    return header.dst_address == RingNetworkProtocol::broadcast_address;
   }
   inline bool isDataPacket(uint8_t dst_address, uint8_t minDataSize, uint8_t msgId)
   {
