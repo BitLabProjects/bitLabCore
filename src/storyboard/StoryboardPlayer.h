@@ -30,6 +30,7 @@ public:
 
   bool isPlaying() { return playStatus == PlayStatus::Playing; }
   millisec64 getStoryboardTime() { return storyboardTime; }
+  void setStoryboardTimeSyncDelta(millisec value) { syncDelta = value; }
 
 private:
   Storyboard* storyboard;
@@ -45,6 +46,8 @@ private:
   millisec playBufferTailTime;
   millisec playBufferMaxTime;
   volatile millisec64 storyboardTime;
+  // Synchronization delta: positive values means we need to catch up
+  volatile millisec64 syncDelta;
 
   void executePlayBuffer();
 };
