@@ -109,6 +109,7 @@ enum PTxAction
 {
   PassAlongDecreasingTTL,
   SendFreePacket,
+  StopNetworkLoop,
   Send
 };
 
@@ -125,6 +126,8 @@ public:
   // ------------------
 
   void attachOnPacketReceived(Callback<void(RingPacket *, PTxAction *)> onPacketReceived) { this->onPacketReceived = onPacketReceived; }
+
+  void startNetworkLoop();
 
   bool packetReceived() { return rx_packet_ready; }
   RingPacket *getPacket() { return &rx_packet; }
@@ -162,6 +165,7 @@ private:
   volatile millisec mac_watcher_timeout;
   volatile millisec mac_delay_timeout;
   bool is_connected;
+  bool is_network_loop_started;
 
   void mainLoop_UpdateWatcher(bool packetReceived);
   void mainLoop_UpdateMac(RingPacket *p);

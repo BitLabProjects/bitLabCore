@@ -11,6 +11,8 @@ RingNetwork::RingNetwork(PinName TxPin,
                                                  watchForSilence(watchForSilence),
                                                  mac_watcher_state(MacWatcherState::Start),
                                                  mac_watcher_timeout(0),
+                                                 is_connected(false),
+                                                 is_network_loop_started(true),
                                                  tx_state(TxState::TxIdle),
                                                  tx_packet_size(0),
                                                  tx_packet_idx(0),
@@ -21,6 +23,11 @@ RingNetwork::RingNetwork(PinName TxPin,
                                                  rx_packet_ready(false)
 {
   mac_delay_timeout = 0;
+}
+
+void RingNetwork::startNetworkLoop()
+{
+  is_network_loop_started = true;
 }
 
 void RingNetwork::init(const bitLabCore *core)
@@ -36,7 +43,7 @@ void RingNetwork::mainLoop()
 {
   bool packetReceived = this->packetReceived();
   //Always update watcher: it has the timeot to detect too much silence
-  if (watchForSilence) {
+  if (watchForSilence && is_network_loop_started) {
     mainLoop_UpdateWatcher(packetReceived);
   }
 
@@ -266,6 +273,10 @@ void RingNetwork::mainLoop_UpdateMac(RingPacket *p)
   case PTxAction::SendFreePacket:
     p->setFreePacket();
     break;
+
+  case PTxAction::StopNetworkLoop:
+    is_network_loop_started = false;
+    return;
 
   case PTxAction::Send:
     break;
