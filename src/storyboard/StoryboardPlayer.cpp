@@ -4,8 +4,7 @@
 #include "..\Utils.h"
 
 StoryboardPlayer::StoryboardPlayer(Storyboard *storyboard, Callback<void(const PlayBufferEntry*)> onSetOutput) : storyboard(storyboard),
-                                                                                                                 onSetOutput(onSetOutput),
-                                                                                                                 syncDelta(0)
+                                                                                                                 onSetOutput(onSetOutput)
 {
   playBufferCount = 10;
   playBuffer = new PlayBufferEntry[playBufferCount];
@@ -90,15 +89,6 @@ void StoryboardPlayer::advance(millisec timeDelta)
 {
   if (playStatus == Playing)
   {
-    // Consume 1ms (with sign) from the syncDelta
-    if (syncDelta != 0) {
-      auto absSyncDelta = Utils::abs(syncDelta);
-      auto deltaToApply = absSyncDelta > 100 ? 50 : absSyncDelta > 20 ? 5 : 1;
-      deltaToApply *= (syncDelta > 0 ? 1 : -1);
-      timeDelta += deltaToApply;
-      syncDelta -= deltaToApply;
-    }
-
     millisec64 newStoryboardTime = (storyboardTime + timeDelta) % playBufferMaxTime;
     if (newStoryboardTime < playBufferTailTime)
     {
