@@ -118,6 +118,7 @@ int bitLabCore::getUsedHeap()
 
 const char* bitLabCore::getClockSourceDescr() const
 {
+#ifdef UseClockSource
   RCC_ClkInitTypeDef clockInit;
   uint32_t pfLatency;
   HAL_RCC_GetClockConfig(&clockInit, &pfLatency);
@@ -129,5 +130,6 @@ const char* bitLabCore::getClockSourceDescr() const
     else
       return "PLL-HSE";
   }
+#endif
   return "Unknown";
 }
