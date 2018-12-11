@@ -89,22 +89,20 @@ void StoryboardPlayer::advance(millisec timeDelta)
 {
   if (playStatus == Playing)
   {
-    millisec64 newStoryboardTime = (storyboardTime + timeDelta) % playBufferMaxTime;
-    if (newStoryboardTime < playBufferTailTime)
+    millisec64 newStoryboardTime = storyboardTime + timeDelta;
+    if (newStoryboardTime >= playBufferMaxTime)
     {
-      //execute all remaining entries up to max time
-      storyboardTime = playBufferMaxTime;
-      executePlayBuffer();
-      //Then reset
-      playBufferTailTime = 0;
+      //execute all remaining entries up to max time then stop
+      executeAllRemainingPlayBuffer();
+      stop();
+    } else {
+      storyboardTime = newStoryboardTime;
+      maybeExecuteOneEntryInPlayBuffer();
     }
-
-    storyboardTime = newStoryboardTime;
-    executePlayBuffer();
   }
 }
 
-void StoryboardPlayer::executePlayBuffer()
+void StoryboardPlayer::maybeExecuteOneEntryInPlayBuffer()
 {
   //Try consuming the next entry in the play buffer, if present
   if (playBufferTail != playBufferHead)
@@ -127,3 +125,13 @@ void StoryboardPlayer::executePlayBuffer()
     }
   }
 }
+
+void StoryboardPlayer::executeAllRemainingPlayBuffer()
+{
+  while (playBufferTail != playBufferHead)
+  {
+    onSetOutput(&playBuffer[playBufferTail]);
+    playBufferTail = (playBufferTail + 1) % playBufferCount;
+  }
+}
+

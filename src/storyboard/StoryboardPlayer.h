@@ -46,7 +46,8 @@ private:
   millisec playBufferMaxTime;
   volatile millisec64 storyboardTime;
 
-  void executePlayBuffer();
+  void maybeExecuteOneEntryInPlayBuffer();
+  void executeAllRemainingPlayBuffer();
 };
 
 #endif
